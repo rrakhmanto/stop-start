@@ -14,15 +14,15 @@ autoscaling.describeAutoScalingGroups({}, function(err, data) {
   } else {
     console.log(data.AutoScalingGroups);
 
-    data.AutoScalingGroups.forEach(adjustGroupSize);
+    data.AutoScalingGroups.forEach(adjustGroupSize, 0);
   }
 });
 
-function adjustGroupSize(group) {
+function adjustGroupSize(group, number) {
   var updateParams = {
     AutoScalingGroupName: group.AutoScalingGroupName,
-    MaxSize: 1,
-    MinSize: 1
+    MaxSize: number,
+    MinSize: number
   }
   autoscaling.updateAutoScalingGroup(updateParams, function(err, data) {
     if (err) {
