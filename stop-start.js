@@ -7,7 +7,7 @@ AWS.config.credentials = credentials;
 
 var autoscaling = new AWS.AutoScaling(); 
 
-var stopStart = stop;
+var stopStart = 'start';
 
 const ZERO = 0;
 const ONE = 1;
@@ -18,9 +18,9 @@ autoscaling.describeAutoScalingGroups({}, function(err, data) {
     console.log(err, err.stack);
   } else {
     console.log(data.AutoScalingGroups);
-    if (stopStart === stop) {
+    if (stopStart === 'stop') {
       data.AutoScalingGroups.forEach(downsizeGroupSize);
-    } else if (stopStart === start) {
+    } else if (stopStart === 'start') {
       data.AutoScalingGroups.forEach(upsizeGroupSize);
     } else {
       console.log('Error: please choose eithet start or stop as the action to perform');
