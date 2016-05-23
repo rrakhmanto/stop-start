@@ -7,7 +7,31 @@ AWS.config.credentials = credentials;
 
 var autoscaling = new AWS.AutoScaling(); 
 
+// Terminate the ASG instances by setting the group size to zero
 autoscaling.describeAutoScalingGroups({}, function(err, data) {
-  if (err) console.log(err, err.stack);
-  else     console.log(data);
+  if (err) {
+    console.log(err, err.stack);
+  } else {
+
+    console.log(data.AutoScalingGroups[0]);
+
+    var updateParams = {
+      AutoScalingGroupName: data.AutoScalingGroups[0].AutoScalingGroupName,
+      MaxSize: 0,
+      MinSize: 0
+    };
+
+
+
+
+
+    autoscaling.updateAutoScalingGroup(updateParams, function(err, data) {
+      if (err) {
+        console.log(err, err.stack);
+      } else {
+        console.log(data);
+      }
+    });
+  }
 });
+
