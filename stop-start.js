@@ -1,4 +1,4 @@
-'use strict';
+//'use strict';
 console.log('Loading function');
 var AWS = require('aws-sdk');
 AWS.config.region = 'ap-southeast-2';
@@ -18,43 +18,27 @@ var asgInstances = [];
 var instances = [];
 
 // Launch or terminate the ASG instances by altering the group size
-console.log('Handling ASG instances...');
-autoscaling.describeAutoScalingGroups({}, function(err, data) {
-  if (err) {
-    console.log(err, err.stack);
-  } else {
-    console.log(data.AutoScalingGroups);
-
-    if (stopStart === 'stop') {
-      data.AutoScalingGroups.forEach(decreaseGroupSize);
-    } else if (stopStart === 'start') {
-      //data.AutoScalingGroups.forEach(increaseGroupSize);
-      handleInstances(data.AutoScalingGroups);
+function handleAsgInstances() {
+  console.log('Handling ASG instances...');
+  autoscaling.describeAutoScalingGroups({}, function(err, data) {
+    if (err) {
+      console.log(err, err.stack);
     } else {
-      console.log('Error: please choose either start or stop as the action to perform');
-    }
-  }
-});
+      console.log(data.AutoScalingGroups);
 
-// Recursively call the increase group size function until the last element
-// Then call it again with the flag set to continue on with the standalone instances
-// So this will fire off processes to update each ASG with the last one to move on
-// But how do I know that the last one to be fired off will actually finish last?
-// Tesrting reveals that they can finish in any order which is a pain...
-function handleInstances(groups) {
-  if (groups.length === 0) {
-    console.log('No ASGs found, moving on to the standalone instances...');
-  } else if (groups.length === 1) {
-    increaseGroupSize(groups[0], true);
-  } else {
-    increaseGroupSize(groups[0], false);
-    groups.shift();
-    handleInstances(groups);
-  }
+      if (stopStart === 'stop') {
+        data.AutoScalingGroups.forEach(decreaseGroupSize);
+      } else if (stopStart === 'start') {
+        data.AutoScalingGroups.forEach(increaseGroupSize);
+      } else {
+        console.log('Error: please choose either start or stop as the action to perform');
+      }
+    }
+  });
 }
 
 // Start or stop any standalone instances not covered by the ASGs
-function standaloneInstances() {
+function handleStandaloneInstances() {
   console.log('Handling standalone instances...');
   ec2.describeInstances({}, function(err, data) {
     if (err) {
@@ -78,35 +62,29 @@ function decreaseGroupSize(group) {
     MinSize: ZERO
   }
   console.log('Stopping ASG instances for ' + group.AutoScalingGroupName + ' ...');
-  recordAsgInstances(group);
   autoscaling.updateAutoScalingGroup(updateParams, function(err, data) {
     if (err) {
       console.log(err, err.stack);
     } else {
-      console.log(data);
-      console.log(asgInstances);
+      // console.log(data);
+      console.log('Finished stopping ASG instances for ' + group.AutoScalingGroupName);
     }
   });
 }
 
-function increaseGroupSize(group, flag) {
+function increaseGroupSize(group) {
   var updateParams = {
     AutoScalingGroupName: group.AutoScalingGroupName,
     MaxSize: TWO,
     MinSize: TWO
   }
   console.log('Starting ASG instances for ' + group.AutoScalingGroupName + ' ...');
-  recordAsgInstances(group);
   autoscaling.updateAutoScalingGroup(updateParams, function(err, data) {
     if (err) {
       console.log(err, err.stack);
     } else {
       // console.log(data);
-      // console.log(asgInstances);
-      console.log('Finished starting ASG instances in ' + group.AutoScalingGroupName);
-      if (flag) {
-        standaloneInstances();
-      }
+      console.log('Finished starting ASG instances for ' + group.AutoScalingGroupName);
     }
   });
 }
@@ -127,7 +105,9 @@ function recordInstances(array) {
   }
 }
 
-
+// Execute the main fubnctions
+handleAsgInstances();
+handleStandaloneInstances();
 
 
 
