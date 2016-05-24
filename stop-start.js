@@ -48,7 +48,6 @@ function describeAsgInstances() {
 }
 
 function handleAsgInstances(groups) {
-  // Launch or terminate ASG instances
   console.log('Handling ASG instances...');
   if (stopStart === 'stop') {
     groups.forEach(decreaseGroupSize);
@@ -58,7 +57,7 @@ function handleAsgInstances(groups) {
 }
 
 // Start or stop any standalone instances not covered by the ASGs
-function handleStandaloneInstances() {
+function describeStandaloneInstances() {
   console.log('Handling standalone instances...');
   ec2.describeInstances({}, function(err, data) {
     if (err) {
@@ -74,17 +73,24 @@ function handleStandaloneInstances() {
         // Filter out the instances in ASGs
         var filteredInstances = filterInstances();
         console.log('Filtered instances: ', filteredInstances);
-        // Start or stop the standalone instances
-        if (stopStart === 'stop') {
-          stopInstances(filteredInstances);
-        } else {
-          startInstances(filteredInstances);
+        // Start or stop the standalone instances if specified
+        if (!reportOnly) {
+          handleStandaloneInstances();
         }
       } else {
         console.log('No ASGs present in this environment, moving on...');
       }
     }
   });
+}
+
+function handleStandaloneInstances() {
+  console.log('Handling standalone instances...');
+  if (stopStart === 'stop') {
+    stopInstances(filteredInstances);
+  } else {
+    startInstances(filteredInstances);
+  }
 }
 
 function decreaseGroupSize(group) {
@@ -121,6 +127,7 @@ function increaseGroupSize(group) {
   });
 }
 
+// Compare the two sets of instances as we want to exclude anhy instances in ASGs
 function filterInstances() {
   var results = [];
   instances.forEach(function(instance) {
@@ -182,7 +189,7 @@ function recordInstances(array) {
 // Execute the main functions
 checkInput(stopStart);
 describeAsgInstances();
-// handleStandaloneInstances();
+describeStandaloneInstances();
 
 
 
