@@ -1,12 +1,12 @@
-//'use strict';
+'use strict';
 console.log('Loading function');
 var AWS = require('aws-sdk');
 AWS.config.region = 'ap-southeast-2';
 var credentials = new AWS.SharedIniFileCredentials({profile: 'm.kempster'});
 AWS.config.credentials = credentials;
-
 var autoscaling = new AWS.AutoScaling(); 
 var ec2 = new AWS.EC2();
+
 var stopStart = 'start';
 
 const ZERO = 0;
@@ -17,6 +17,13 @@ const TWO = 2;
 var asgInstances = [];
 var instances = [];
 
+function checkInput(stopStart) {
+  if (stopStart !== 'stop' && stopStart !== 'start') {
+    console.log('Error: please choose either start or stop as the action to perform');
+    process.exit(1);
+  }
+}
+
 // Launch or terminate the ASG instances by altering the group size
 function handleAsgInstances() {
   console.log('Handling ASG instances...');
@@ -24,16 +31,18 @@ function handleAsgInstances() {
     if (err) {
       console.log(err, err.stack);
     } else {
-      console.log(data.AutoScalingGroups);
-
-      retrieveAsgInstances(data.AutoScalingGroups);
-
-      if (stopStart === 'stop') {
-        data.AutoScalingGroups.forEach(decreaseGroupSize);
-      } else if (stopStart === 'start') {
-        data.AutoScalingGroups.forEach(increaseGroupSize);
+      console.log(data);
+      if (data.AutoScalingGroups.length > 0) {
+        // Get the list of all ASG instances
+        retrieveAsgInstances(data.AutoScalingGroups);
+        // Launch or terminate ASG instances
+        if (stopStart === 'stop') {
+          data.AutoScalingGroups.forEach(decreaseGroupSize);
+        } else {
+          data.AutoScalingGroups.forEach(increaseGroupSize);
+        }
       } else {
-        console.log('Error: please choose either start or stop as the action to perform');
+        console.log('No standalone instances present in this environment, moving on...');
       }
     }
   });
@@ -47,21 +56,26 @@ function handleStandaloneInstances() {
       console.log(err, err.stack);
     } else {
       console.log(data);
-
-      for (var i = 0; i < data.Reservations.length; i++) {
-        recordInstances(data.Reservations[i].Instances);
+      if (data.Reservations.length > 0) {
+        // Get the list of all instances
+        for (var i = 0; i < data.Reservations.length; i++) {
+          recordInstances(data.Reservations[i].Instances);
+        }
+        console.log('All instances: ', instances);
+        // Filter out the instances in ASGs
+        var filteredInstances = filterInstances();
+        console.log('Filtered instances: ', filteredInstances);
+        // Start or stop the standalone instances
+        if (stopStart === 'stop') {
+          stopInstances(filteredInstances);
+        } else {
+          startInstances(filteredInstances);
+        }
+      } else {
+        console.log('No ASGs present in this environment, moving on...');
       }
-
-      console.log(instances);
     }
   });
-}
-
-function retrieveAsgInstances(groups) {
-  console.log('Starting ASG instance retrieval...');
-  groups.forEach(recordAsgInstances);
-  console.log(asgInstances);
-  console.log('Completed ASG instance retrieval...');
 }
 
 function decreaseGroupSize(group) {
@@ -75,7 +89,7 @@ function decreaseGroupSize(group) {
     if (err) {
       console.log(err, err.stack);
     } else {
-      // console.log(data);
+      console.log(data);
       console.log('Finished stopping ASG instances for ' + group.AutoScalingGroupName);
     }
   });
@@ -92,13 +106,55 @@ function increaseGroupSize(group) {
     if (err) {
       console.log(err, err.stack);
     } else {
-      // console.log(data);
+      console.log(data);
       console.log('Finished starting ASG instances for ' + group.AutoScalingGroupName);
     }
   });
 }
 
-// Retrieve the ASG instance IDs for later use
+function filterInstances() {
+  var results = [];
+  instances.forEach(function(instance) {
+    if (asgInstances.indexOf(instance) === -1) {
+      results.push(instance);
+    }
+  });
+  return results;
+}
+
+function stopInstances(instances) {
+  console.log('Stopping standalone instances...')
+  ec2.stopInstances({InstanceIds: instances}, function(err, data) {
+    if (err) {
+      console.log(err, err.stack);
+    } else {
+      console.log(data);
+      console.log('Finished stopping standalone instances');
+    }
+  });
+}
+
+function startInstances(instances) {
+  console.log('Starting standalone instances...')
+  ec2.startInstances({InstanceIds: instances}, function(err, data) {
+    if (err) {
+      console.log(err, err.stack);
+    } else {
+      console.log(data);
+      console.log('Finished starting standalone instances');
+    }
+  });
+}
+
+// Iterates over all ASGs to get all instances inside them
+function retrieveAsgInstances(groups) {
+  console.log('Starting ASG instance retrieval...');
+  groups.forEach(recordAsgInstances);
+  console.log('ASG instances: ', asgInstances);
+  console.log('Completed ASG instance retrieval');
+}
+
+// Retrieve the ASG instance IDs
 function recordAsgInstances(group) {
   console.log('Recording ASG instances for ' + group.AutoScalingGroupName + ' ...');
   for (var i = 0; i < group.Instances.length; i++) {
@@ -106,7 +162,7 @@ function recordAsgInstances(group) {
   }
 }
 
-// Retrieve the standalone instance IDs for later use
+// Retrieve the standalone instance IDs
 function recordInstances(array) {
   console.log('Recording standalone instances...');
   for (var i = 0; i < array.length; i++) {
@@ -115,6 +171,7 @@ function recordInstances(array) {
 }
 
 // Execute the main functions
+checkInput(stopStart);
 handleAsgInstances();
 handleStandaloneInstances();
 
