@@ -15,22 +15,23 @@ const TWO = 2;
 
 // Keeps track of all instances in ASGs
 var asgInstances = [];
+var instances = [];
 
 // Launch or terminate the ASG instances by altering the group size
-autoscaling.describeAutoScalingGroups({}, function(err, data) {
-  if (err) {
-    console.log(err, err.stack);
-  } else {
-    console.log(data.AutoScalingGroups[0].Instances);
-    if (stopStart === 'stop') {
-      data.AutoScalingGroups.forEach(downsizeGroupSize);
-    } else if (stopStart === 'start') {
-      data.AutoScalingGroups.forEach(upsizeGroupSize);
-    } else {
-      console.log('Error: please choose either start or stop as the action to perform');
-    }
-  }
-});
+// autoscaling.describeAutoScalingGroups({}, function(err, data) {
+//   if (err) {
+//     console.log(err, err.stack);
+//   } else {
+//     console.log(data.AutoScalingGroups[0].Instances);
+//     if (stopStart === 'stop') {
+//       data.AutoScalingGroups.forEach(decreaseGroupSize);
+//     } else if (stopStart === 'start') {
+//       data.AutoScalingGroups.forEach(increaseGroupSize);
+//     } else {
+//       console.log('Error: please choose either start or stop as the action to perform');
+//     }
+//   }
+// });
 
 // Start or stop any standalone instances not covered by the ASGs
 ec2.describeInstances({}, function(err, data) {
@@ -38,15 +39,16 @@ ec2.describeInstances({}, function(err, data) {
     console.log(err, err.stack);
   } else {
     console.log(data);
-    data.Reservations.forEach(list);
 
-    function list(res) {
-      console.log(res.Instances);
+    for (var i = 0; i < data.Reservations.length; i++) {
+      recordInstances(data.Reservations[i].Instances);
     }
+    
+    console.log(instances);
   }
 });
 
-function downsizeGroupSize(group) {
+function decreaseGroupSize(group) {
   var updateParams = {
     AutoScalingGroupName: group.AutoScalingGroupName,
     MaxSize: ZERO,
@@ -63,7 +65,7 @@ function downsizeGroupSize(group) {
   });
 }
 
-function upsizeGroupSize(group) {
+function increaseGroupSize(group) {
   var updateParams = {
     AutoScalingGroupName: group.AutoScalingGroupName,
     MaxSize: TWO,
@@ -87,6 +89,11 @@ function recordAsgInstances(group) {
   }
 }
 
+function recordInstances(array) {
+  for (var i = 0; i < array.length; i++) {
+    instances.push(array[i].InstanceId);
+  }
+}
 
 
 
