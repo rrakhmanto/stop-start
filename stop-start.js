@@ -8,6 +8,7 @@ var autoscaling = new AWS.AutoScaling();
 var ec2 = new AWS.EC2();
 
 var stopStart = 'start';
+var reportOnly = 'true';
 
 const ZERO = 0;
 const ONE = 1;
@@ -25,8 +26,8 @@ function checkInput(stopStart) {
 }
 
 // Launch or terminate the ASG instances by altering the group size
-function handleAsgInstances() {
-  console.log('Handling ASG instances...');
+function describeAsgInstances() {
+  console.log('Retrieving ASG instances...');
   autoscaling.describeAutoScalingGroups({}, function(err, data) {
     if (err) {
       console.log(err, err.stack);
@@ -35,17 +36,25 @@ function handleAsgInstances() {
       if (data.AutoScalingGroups.length > 0) {
         // Get the list of all ASG instances
         retrieveAsgInstances(data.AutoScalingGroups);
-        // Launch or terminate ASG instances
-        if (stopStart === 'stop') {
-          data.AutoScalingGroups.forEach(decreaseGroupSize);
-        } else {
-          data.AutoScalingGroups.forEach(increaseGroupSize);
+        // Launch or terminate ASG instances if specified
+        if (!reportOnly) {
+          handleAsgInstances(data.AutoScalingGroups);
         }
       } else {
         console.log('No standalone instances present in this environment, moving on...');
       }
     }
   });
+}
+
+function handleAsgInstances(groups) {
+  // Launch or terminate ASG instances
+  console.log('Handling ASG instances...');
+  if (stopStart === 'stop') {
+    groups.forEach(decreaseGroupSize);
+  } else {
+    groups.forEach(increaseGroupSize);
+  }
 }
 
 // Start or stop any standalone instances not covered by the ASGs
@@ -172,8 +181,8 @@ function recordInstances(array) {
 
 // Execute the main functions
 checkInput(stopStart);
-handleAsgInstances();
-handleStandaloneInstances();
+describeAsgInstances();
+// handleStandaloneInstances();
 
 
 
