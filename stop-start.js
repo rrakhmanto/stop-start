@@ -13,7 +13,7 @@ const ZERO = 0;
 const ONE = 1;
 const TWO = 2;
 
-// Keeps track of all instances in ASGs
+// Keeps track of all instances to compare later
 var asgInstances = [];
 var instances = [];
 
@@ -25,6 +25,8 @@ function handleAsgInstances() {
       console.log(err, err.stack);
     } else {
       console.log(data.AutoScalingGroups);
+
+      retrieveAsgInstances(data.AutoScalingGroups);
 
       if (stopStart === 'stop') {
         data.AutoScalingGroups.forEach(decreaseGroupSize);
@@ -53,6 +55,13 @@ function handleStandaloneInstances() {
       console.log(instances);
     }
   });
+}
+
+function retrieveAsgInstances(groups) {
+  console.log('Starting ASG instance retrieval...');
+  groups.forEach(recordAsgInstances);
+  console.log(asgInstances);
+  console.log('Completed ASG instance retrieval...');
 }
 
 function decreaseGroupSize(group) {
@@ -105,7 +114,7 @@ function recordInstances(array) {
   }
 }
 
-// Execute the main fubnctions
+// Execute the main functions
 handleAsgInstances();
 handleStandaloneInstances();
 
