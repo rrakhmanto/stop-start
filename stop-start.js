@@ -7,9 +7,9 @@ AWS.config.credentials = credentials;
 var autoscaling = new AWS.AutoScaling(); 
 var ec2 = new AWS.EC2();
 
-var stopStart = 'stop';
-var reportOnly = false;
-var environment = 'dev';
+var stopStart = 'start';
+var reportOnly = true;
+var environment = 'prod';
 
 const ZERO = 0;
 const ONE = 1;
@@ -117,7 +117,14 @@ function increaseGroupSize(group) {
 // Iterates over all ASGs to get all instances inside them
 function retrieveAsgInstances(groups) {
   console.log('Commencing ASG instance retrieval...');
-  groups.forEach(recordAsgInstances);
+  groups.forEach( function(group) {
+    console.log('Recording ASG instances for ' + group.AutoScalingGroupName + ' ...');
+    for (var i = 0; i < group.Instances.length; i++) {
+      if (group.Instances[i] !== 'terminated') {
+        asgInstances.push(group.Instances[i].InstanceId);
+      }
+    }
+  });
   console.log('Completed ASG instance retrieval');
 }
 
@@ -205,7 +212,7 @@ function startInstances(instances) {
 // Retrieve all instance IDs accorring to their environment type
 // Ignores recently terminated instances as they hang around for a while
 function recordStandaloneInstances(instances) {
-  // console.log('Recording all instances in the reservation...');
+  console.log('Recording all instances in the reservation...');
   for (var i = 0; i < instances.length; i++) {
     var results = { Environment: null, Asg: false };
     for (var j = 0; j < instances[i].Tags.length; j++) {
@@ -230,17 +237,23 @@ function recordStandaloneInstances(instances) {
 // Also ignores instances that are already in the state that is trying to be accomplished
 // Note this will also include and check any instances in ASGs, these will get filtered out later
 function filterOutStuff(instance) {
-  var transientStates = ['pending', 'shutting-down', 'stopping'];
-  if (transientStates.indexOf(instance.State.Name) > -1) {
-    console.log('WARNING: instance is in a ' + instance.State.Name + ' state, ignoring...');
-    console.log('Please wait a minute or two and try running the operation again');
-    console.log('Otherwise you may want to see what this instance is doing in the console as it may be having issues');
-  } else if (instance.State.Name === 'stopped' && stopStart === 'stop') {
-    console.log('Instance ' + instance.InstanceId + ' already stopped, ignoring...');
-  } else if (instance.State.Name === 'running' && stopStart === 'start') {
-    console.log('Instance ' + instance.InstanceId + ' already started, ignoring...');
-  } else if (instance.State.Name !== 'terminated') {
-    instances.push(instance.InstanceId);
+  if (!reportOnly) {
+    var transientStates = ['pending', 'shutting-down', 'stopping'];
+    if (transientStates.indexOf(instance.State.Name) > -1) {
+      console.log('WARNING: instance is in a ' + instance.State.Name + ' state, ignoring...');
+      console.log('Please wait a minute or two and try running the operation again');
+      console.log('Otherwise you may want to see what this instance is doing in the console as it may be having issues');
+    } else if (instance.State.Name === 'stopped' && stopStart === 'stop') {
+      console.log('Instance ' + instance.InstanceId + ' already stopped, ignoring...');
+    } else if (instance.State.Name === 'running' && stopStart === 'start') {
+      console.log('Instance ' + instance.InstanceId + ' already started, ignoring...');
+    } else if (instance.State.Name !== 'terminated') {
+      instances.push(instance.InstanceId);
+    }
+  } else {
+    if (instance.State.Name !== 'terminated') {
+      instances.push(instance.InstanceId);
+    }
   }
 }
 
