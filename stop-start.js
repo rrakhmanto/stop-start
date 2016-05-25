@@ -7,7 +7,7 @@ AWS.config.credentials = credentials;
 var autoscaling = new AWS.AutoScaling(); 
 var ec2 = new AWS.EC2();
 
-var stopStart = 'start';
+var stopStart = 'stop';
 var reportOnly = false;
 var environment = 'dev';
 
@@ -116,7 +116,7 @@ function increaseGroupSize(group) {
 
 // Iterates over all ASGs to get all instances inside them
 function retrieveAsgInstances(groups) {
-  console.log('Starting ASG instance retrieval...');
+  console.log('Commencing ASG instance retrieval...');
   groups.forEach(recordAsgInstances);
   console.log('Completed ASG instance retrieval');
 }
