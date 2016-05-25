@@ -37,13 +37,28 @@ function describeAsgInstances() {
     if (err) {
       console.log(err, err.stack);
     } else {
-      // console.log(data);
+      console.log(data);
       if (data.AutoScalingGroups.length > 0) {
+        var results = [];
+        for (var i = 0; i < data.AutoScalingGroups.length; i++) {
+          var tagMissing = true;
+          for (var j = 0; j < data.AutoScalingGroups[i].Tags.length; j++) {
+            if (data.AutoScalingGroups[i].Tags[j].Key === 'environment') {
+              tagMissing = false;
+              if (data.AutoScalingGroups[i].Tags[j].Value === environment) {
+                results.push(data.AutoScalingGroups[i]);
+              }
+            }
+          }
+          if (tagMissing === true) {
+            console.log('WARNING: environment tag not found for ' + data.AutoScalingGroups[i].AutoScalingGroupName + ', this ASG will not be handled');
+          }
+        }
         // Get the list of all ASG instances
-        retrieveAsgInstances(data.AutoScalingGroups);
+        retrieveAsgInstances(results);
         // Launch or terminate ASG instances if reporting only not specified
         if (!reportOnly) {
-          handleAsgInstances(data.AutoScalingGroups);
+          handleAsgInstances(results);
         }
       } else {
         console.log('No ASG instances present in this environment, moving on...');
