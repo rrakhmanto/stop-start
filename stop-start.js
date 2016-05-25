@@ -21,10 +21,12 @@ var instances = [];
 
 function checkInput(stopStart) {
   if (stopStart !== 'stop' && stopStart !== 'start') {
-    console.log('Error: please choose either start or stop as the action to perform');
+    console.log('ERROR: please choose either start or stop as the action to perform');
     process.exit(1);
   }
 }
+
+//////////////////////////////// ASG FUNCTIONS ////////////////////////////////
 
 // Launch or terminate the ASG instances by altering the group size
 // Note this will run regardeless of whether there are any instances in the
@@ -57,44 +59,6 @@ function handleAsgInstances(groups) {
     groups.forEach(decreaseGroupSize);
   } else {
     groups.forEach(increaseGroupSize);
-  }
-}
-
-// Start or stop any standalone instances not covered by the ASGs
-function describeStandaloneInstances() {
-  console.log('Handling standalone instances...');
-  ec2.describeInstances({}, function(err, data) {
-    if (err) {
-      console.log(err, err.stack);
-    } else {
-      // console.log(data);
-      if (data.Reservations.length > 0) {
-        // Get the list of all instances
-        for (var i = 0; i < data.Reservations.length; i++) {
-          recordAllInstances(data.Reservations[i].Instances);
-        }
-        console.log('All instances: ', instances);
-        // Filter out the instances in ASGs
-        var filteredInstances = filterInstances();
-        console.log('Filtered instances: ', filteredInstances);
-        // Start or stop the standalone instances if reporting only not specified
-        if (!reportOnly) {
-          handleStandaloneInstances(filteredInstances);
-        }
-      } else {
-        console.log('No standalone instances present in this environment, moving on...');
-      }
-    }
-  });
-}
-
-// Initiate the standalone updatng process
-function handleStandaloneInstances(instances) {
-  console.log('Handling standalone instances...');
-  if (stopStart === 'stop') {
-    stopInstances(instances);
-  } else {
-    startInstances(instances);
   }
 }
 
@@ -134,51 +98,6 @@ function increaseGroupSize(group) {
   });
 }
 
-// Compare the two sets of instances as we want to exclude any instances in ASGs
-function filterInstances() {
-  var results = [];
-  instances.forEach(function(instance) {
-    if (asgInstances.indexOf(instance) === -1) {
-      results.push(instance);
-    }
-  });
-  return results;
-}
-
-// Attempts to stop all instances supplied
-function stopInstances(instances) {
-  console.log('Stopping standalone instances...');
-  if (instances.length > 0) {
-    ec2.stopInstances({InstanceIds: instances}, function(err, data) {
-      if (err) {
-        console.log(err, err.stack);
-      } else {
-        console.log(data);
-        console.log('Finished stopping standalone instances');
-      }
-    });
-  } else {
-    console.log('No standalone instances supplied to stop');
-  }
-}
-
-// Attempts to start all instances supplied
-function startInstances(instances) {
-  console.log('Starting standalone instances...');
-  if (instances.length > 0) {
-    ec2.startInstances({InstanceIds: instances}, function(err, data) {
-      if (err) {
-        console.log(err, err.stack);
-      } else {
-        console.log(data);
-        console.log('Finished starting standalone instances');
-      }
-    });
-  } else {
-    console.log('No standalone instances supplied to start');
-  }
-}
-
 // Iterates over all ASGs to get all instances inside them
 function retrieveAsgInstances(groups) {
   console.log('Starting ASG instance retrieval...');
@@ -197,10 +116,97 @@ function recordAsgInstances(group) {
   }
 }
 
+//////////////////////////////// STANDALONE FUNCTIONS ////////////////////////////////
+
+// Start or stop any standalone instances not covered by the ASGs
+function describeStandaloneInstances() {
+  console.log('Handling standalone instances...');
+  ec2.describeInstances({}, function(err, data) {
+    if (err) {
+      console.log(err, err.stack);
+    } else {
+      // console.log(data);
+      if (data.Reservations.length > 0) {
+        // Get the list of all instances
+        for (var i = 0; i < data.Reservations.length; i++) {
+          recordAllInstances(data.Reservations[i].Instances);
+        }
+        console.log('All instances: ', instances);
+        // Filter out the instances in ASGs
+        var filteredInstances = filterInstances();
+        console.log('Filtered instances: ', filteredInstances);
+        // Start or stop the standalone instances if reporting only not specified
+        if (!reportOnly) {
+          handleStandaloneInstances(filteredInstances);
+        }
+      } else {
+        console.log('No standalone instances present in this environment, moving on...');
+      }
+    }
+  });
+}
+
+// Initiate the standalone updatng process
+function handleStandaloneInstances(instances) {
+  console.log('Handling standalone instances...');
+  if (stopStart === 'stop') {
+    stopInstances(instances);
+  } else {
+    startInstances(instances);
+  }
+}
+
+// Attempts to stop all instances supplied
+function stopInstances(instances) {
+  console.log('Stopping standalone instances...');
+  if (instances.length > 0) {
+    ec2.stopInstances({InstanceIds: instances}, function(err, data) {
+      if (err) {
+        console.log(err, err.stack);
+      } else {
+        // console.log(data);
+        console.log('Finished stopping standalone instances');
+      }
+    });
+  } else {
+    console.log('No standalone instances supplied to stop');
+  }
+}
+
+// Attempts to start all instances supplied
+function startInstances(instances) {
+  console.log('Starting standalone instances...');
+  if (instances.length > 0) {
+    ec2.startInstances({InstanceIds: instances}, function(err, data) {
+      if (err) {
+        console.log(err, err.stack);
+      } else {
+        // console.log(data);
+        console.log('Finished starting standalone instances');
+      }
+    });
+  } else {
+    console.log('No standalone instances supplied to start');
+  }
+}
+
+//////////////////////////////// OTHER FUNCTIONS ////////////////////////////////
+
+// Compare the two sets of instances as we want to exclude any instances in ASGs
+function filterInstances() {
+  var results = [];
+  instances.forEach(function(instance) {
+    if (asgInstances.indexOf(instance) === -1) {
+      results.push(instance);
+    }
+  });
+  return results;
+}
+
 // Retrieve all instance IDs
 // Also checks for instances that are in a transient state
 // Ignores recently terminated instances as they hang around for a while
-// Also ignores instanes that are already in the state trying to be accomplished
+// Also ignores instances that are already in the state that is trying to be accomplished
 // Note this will also include and check any instances in ASGs, these will get filtered out later
 function recordAllInstances(array) {
   console.log('Recording standalone instances in the reservation...');
@@ -220,7 +226,8 @@ function recordAllInstances(array) {
   }
 }
 
-// Execute the main functions
+//////////////////////////////// FUNCTION INVOCATION ////////////////////////////////
+
 checkInput(stopStart);
 describeAsgInstances();
 describeStandaloneInstances();
