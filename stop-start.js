@@ -146,10 +146,6 @@ function describeStandaloneInstances() {
         for (var i = 0; i < data.Reservations.length; i++) {
           recordStandaloneInstances(data.Reservations[i].Instances);
         }
-        // console.log('All instances: ', instances);
-        // // Filter out the instances in ASGs
-        // var filteredInstances = filterOutAsgs();
-        // console.log('Filtered instances: ', filteredInstances);
         console.log('Standalone instances: ', instances);
         // Start or stop the standalone instances if reporting only not specified
         if (!reportOnly) {
@@ -206,28 +202,26 @@ function startInstances(instances) {
   }
 }
 
-//////////////////////////////// OTHER FUNCTIONS ////////////////////////////////
-
 // Retrieve all instance IDs accorring to their environment type
 // Ignores recently terminated instances as they hang around for a while
-function recordStandaloneInstances(array) {
+function recordStandaloneInstances(instances) {
   // console.log('Recording all instances in the reservation...');
-  for (var i = 0; i < array.length; i++) {
+  for (var i = 0; i < instances.length; i++) {
     var results = { Environment: null, Asg: false };
-    for (var j = 0; j < array[i].Tags.length; j++) {
-      if (array[i].Tags[j].Key === 'environment') {
-        results.Environment = array[i].Tags[j].Value;
+    for (var j = 0; j < instances[i].Tags.length; j++) {
+      if (instances[i].Tags[j].Key === 'environment') {
+        results.Environment = instances[i].Tags[j].Value;
       }
-      if (array[i].Tags[j].Key === 'aws:autoscaling:groupName') {
+      if (instances[i].Tags[j].Key === 'aws:autoscaling:groupName') {
         results.Asg = true;
       }
     }
     if (results.Asg === false && results.Environment === environment) {
-      filterOutStuff(array[i]);
+      filterOutStuff(instances[i]);
     }
     // Report any stray instances without an environment tag
     if (results.Environment === null) {
-      console.log('WARNING: environment tag not found for ' + array[i].InstanceId + ', this instance will not be handled');
+      console.log('WARNING: environment tag not found for ' + instances[i].InstanceId + ', this instance will not be handled');
     }
   }
 }
@@ -236,35 +230,18 @@ function recordStandaloneInstances(array) {
 // Also ignores instances that are already in the state that is trying to be accomplished
 // Note this will also include and check any instances in ASGs, these will get filtered out later
 function filterOutStuff(instance) {
-  if (!reportOnly) {
-    var transientStates = ['pending', 'shutting-down', 'stopping'];
-    if (transientStates.indexOf(instance.State.Name) > -1) {
-      console.log('WARNING: instance is in a ' + instance.State.Name + ' state, ignoring...');
-      console.log('Please wait a minute or two and try running the operation again');
-      console.log('Otherwise you may want to see what this instance is doing in the console as it may be having issues');
-    } else if (instance.State.Name === 'stopped' && stopStart === 'stop') {
-      console.log('Instance ' + instance.InstanceId + ' already stopped, ignoring...');
-    } else if (instance.State.Name === 'running' && stopStart === 'start') {
-      console.log('Instance ' + instance.InstanceId + ' already started, ignoring...');
-    } else if (instance.State.Name !== 'terminated') {
-      instances.push(instance.InstanceId);
-    }
-  } else {
-    if (instance.State.Name !== 'terminated') {
-      instances.push(instance.InstanceId);
-    }
+  var transientStates = ['pending', 'shutting-down', 'stopping'];
+  if (transientStates.indexOf(instance.State.Name) > -1) {
+    console.log('WARNING: instance is in a ' + instance.State.Name + ' state, ignoring...');
+    console.log('Please wait a minute or two and try running the operation again');
+    console.log('Otherwise you may want to see what this instance is doing in the console as it may be having issues');
+  } else if (instance.State.Name === 'stopped' && stopStart === 'stop') {
+    console.log('Instance ' + instance.InstanceId + ' already stopped, ignoring...');
+  } else if (instance.State.Name === 'running' && stopStart === 'start') {
+    console.log('Instance ' + instance.InstanceId + ' already started, ignoring...');
+  } else if (instance.State.Name !== 'terminated') {
+    instances.push(instance.InstanceId);
   }
-}
-
-// Compare the two sets of instances as we want to exclude any instances in ASGs
-function filterOutAsgs() {
-  var results = [];
-  instances.forEach(function(instance) {
-    if (asgInstances.indexOf(instance) === -1) {
-      results.push(instance);
-    }
-  });
-  return results;
 }
 
 //////////////////////////////// FUNCTION INVOCATION ////////////////////////////////
