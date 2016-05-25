@@ -7,8 +7,8 @@ AWS.config.credentials = credentials;
 var autoscaling = new AWS.AutoScaling(); 
 var ec2 = new AWS.EC2();
 
-var stopStart = 'start';
-var reportOnly = 'true';
+var stopStart = 'stop';
+var reportOnly = false;
 
 const ZERO = 0;
 const ONE = 1;
@@ -75,7 +75,7 @@ function describeStandaloneInstances() {
         console.log('Filtered instances: ', filteredInstances);
         // Start or stop the standalone instances if specified
         if (!reportOnly) {
-          handleStandaloneInstances();
+          handleStandaloneInstances(filteredInstances);
         }
       } else {
         console.log('No ASGs present in this environment, moving on...');
@@ -84,12 +84,12 @@ function describeStandaloneInstances() {
   });
 }
 
-function handleStandaloneInstances() {
+function handleStandaloneInstances(imnstances) {
   console.log('Handling standalone instances...');
   if (stopStart === 'stop') {
-    stopInstances(filteredInstances);
+    stopInstances(instances);
   } else {
-    startInstances(filteredInstances);
+    startInstances(instances);
   }
 }
 
@@ -184,7 +184,10 @@ function recordAsgInstances(group) {
 function recordInstances(array) {
   console.log('Recording standalone instances...');
   for (var i = 0; i < array.length; i++) {
-    instances.push(array[i].InstanceId);
+    // Ignore recently terminated instances as they can hang around for a while
+    if (array[i].State.Name !== 'terminated') {
+      instances.push(array[i].InstanceId);
+    }
   }
 }
 
