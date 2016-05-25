@@ -9,7 +9,7 @@ var ec2 = new AWS.EC2();
 
 var stopStart = 'start';
 var reportOnly = false;
-var environment = 'dev';
+var environment = 'prod';
 
 const ZERO = 0;
 const ONE = 1;
@@ -133,7 +133,7 @@ function describeStandaloneInstances() {
         }
         console.log('All instances: ', instances);
         // Filter out the instances in ASGs
-        var filteredInstances = filterInstances();
+        var filteredInstances = filterOutAsgs();
         console.log('Filtered instances: ', filteredInstances);
         // Start or stop the standalone instances if reporting only not specified
         if (!reportOnly) {
@@ -192,8 +192,52 @@ function startInstances(instances) {
 
 //////////////////////////////// OTHER FUNCTIONS ////////////////////////////////
 
+// Retrieve all instance IDs accorring to their environment type
+// Ignores recently terminated instances as they hang around for a while
+function recordAllInstances(array) {
+  // console.log('Recording all instances in the reservation...');
+  for (var i = 0; i < array.length; i++) {
+    var tagMissing = true;
+    for (var j = 0; j < array[i].Tags.length; j++) {
+      if (array[i].Tags[j].Key === 'environment') {
+        tagMissing = false;
+        if (array[i].Tags[j].Value === environment) {
+          filterOutStuff(array[i]);
+        }
+      }
+    }
+    if (tagMissing === true) {
+      console.log('WARNING: environment tag not found for ' + array[i].InstanceId + ', this instance will not be handled');
+    }
+  }
+}
+
+// Remove instances that are in a transient state
+// Also ignores instances that are already in the state that is trying to be accomplished
+// Note this will also include and check any instances in ASGs, these will get filtered out later
+function filterOutStuff(instance) {
+  if (!reportOnly) {
+    var transientStates = ['pending', 'shutting-down', 'stopping'];
+    if (transientStates.indexOf(instance.State.Name) > -1) {
+      console.log('WARNING: instance is in a ' + instance.State.Name + ' state, ignoring...');
+      console.log('Please wait a minute or two and try running the operation again');
+      console.log('Otherwise you may want to see what this instance is doing in the console as it may be having issues');
+    } else if (instance.State.Name === 'stopped' && stopStart === 'stop') {
+      console.log('Instance ' + instance.InstanceId + ' already stopped, ignoring...');
+    } else if (instance.State.Name === 'running' && stopStart === 'start') {
+      console.log('Instance ' + instance.InstanceId + ' already started, ignoring...');
+    } else if (instance.State.Name !== 'terminated') {
+      instances.push(instance.InstanceId);
+    }
+  } else {
+    if (instance.State.Name !== 'terminated') {
+      instances.push(instance.InstanceId);
+    }
+  }
+}
+
 // Compare the two sets of instances as we want to exclude any instances in ASGs
-function filterInstances() {
+function filterOutAsgs() {
   var results = [];
   instances.forEach(function(instance) {
     if (asgInstances.indexOf(instance) === -1) {
@@ -201,29 +245,6 @@ function filterInstances() {
     }
   });
   return results;
-}
-
-// Retrieve all instance IDs
-// Also checks for instances that are in a transient state
-// Ignores recently terminated instances as they hang around for a while
-// Also ignores instances that are already in the state that is trying to be accomplished
-// Note this will also include and check any instances in ASGs, these will get filtered out later
-function recordAllInstances(array) {
-  console.log('Recording standalone instances in the reservation...');
-  for (var i = 0; i < array.length; i++) {
-    var transientStates = ['pending', 'shutting-down', 'stopping'];
-    if (transientStates.indexOf(array[i].State.Name) > -1) {
-      console.log('WARNING: instance is in a ' + array[i].State.Name + ' state, ignoring...');
-      console.log('Please wait a minute or two and try running the operation again');
-      console.log('Otherwise you may want to see what this instance is doing in the console as it may be having issues');
-    } else if (array[i].State.Name === 'stopped' && stopStart === 'stop') {
-      console.log('Instance ' + array[i].InstanceId + ' already stopped, ignoring...');
-    } else if (array[i].State.Name === 'running' && stopStart === 'start') {
-      console.log('Instance ' + array[i].InstanceId + ' already started, ignoring...');
-    } else if (array[i].State.Name !== 'terminated') {
-      instances.push(array[i].InstanceId);
-    }
-  }
 }
 
 //////////////////////////////// FUNCTION INVOCATION ////////////////////////////////
