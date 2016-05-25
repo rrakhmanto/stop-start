@@ -7,7 +7,7 @@ AWS.config.credentials = credentials;
 var autoscaling = new AWS.AutoScaling(); 
 var ec2 = new AWS.EC2();
 
-var stopStart = 'stop';
+var stopStart = 'start';
 var reportOnly = false;
 
 const ZERO = 0;
@@ -47,6 +47,7 @@ function describeAsgInstances() {
   });
 }
 
+// Initiate the ASG updatng process
 function handleAsgInstances(groups) {
   console.log('Handling ASG instances...');
   if (stopStart === 'stop') {
@@ -84,6 +85,7 @@ function describeStandaloneInstances() {
   });
 }
 
+// Initiate the standalone updatng process
 function handleStandaloneInstances(imnstances) {
   console.log('Handling standalone instances...');
   if (stopStart === 'stop') {
@@ -93,6 +95,7 @@ function handleStandaloneInstances(imnstances) {
   }
 }
 
+// Sets instance quantity parameters in an ASG to relevant hardcoded value (should be zero)
 function decreaseGroupSize(group) {
   var updateParams = {
     AutoScalingGroupName: group.AutoScalingGroupName,
@@ -110,6 +113,7 @@ function decreaseGroupSize(group) {
   });
 }
 
+// Sets instance quantity parameters in an ASG to relevant hardcoded value (shoule be greater that zero)
 function increaseGroupSize(group) {
   var updateParams = {
     AutoScalingGroupName: group.AutoScalingGroupName,
@@ -138,6 +142,8 @@ function filterInstances() {
   return results;
 }
 
+// Attempts to stop all instances supplied
+// Note this function does NOT check to see if the instances are already stopped
 function stopInstances(instances) {
   console.log('Stopping standalone instances...')
   ec2.stopInstances({InstanceIds: instances}, function(err, data) {
@@ -150,6 +156,8 @@ function stopInstances(instances) {
   });
 }
 
+// Attempts to start all instances supplied
+// Note this function does NOT check to see if the instances are already started
 function startInstances(instances) {
   console.log('Starting standalone instances...')
   ec2.startInstances({InstanceIds: instances}, function(err, data) {
