@@ -71,7 +71,7 @@ function describeStandaloneInstances() {
       if (data.Reservations.length > 0) {
         // Get the list of all instances
         for (var i = 0; i < data.Reservations.length; i++) {
-          recordInstances(data.Reservations[i].Instances);
+          recordAllInstances(data.Reservations[i].Instances);
         }
         console.log('All instances: ', instances);
         // Filter out the instances in ASGs
@@ -197,15 +197,15 @@ function recordAsgInstances(group) {
   }
 }
 
-// Retrieve the standalone instance IDs
+// Retrieve all instance IDs
 // Also checks for instances that are in a transient state
+// Ignores recently terminated instances as they hang around for a while
 // Also ignores instanes that are already in the state trying to be accomplished
 // Note this will also include and check any instances in ASGs, these will get filtered out later
-function recordInstances(array) {
+function recordAllInstances(array) {
   console.log('Recording standalone instances in the reservation...');
   for (var i = 0; i < array.length; i++) {
     var transientStates = ['pending', 'shutting-down', 'stopping'];
-    // Ignore recently terminated instances as they can hang around for a while
     if (transientStates.indexOf(array[i].State.Name) > -1) {
       console.log('WARNING: instance is in a ' + array[i].State.Name + ' state, ignoring...');
       console.log('Please wait a minute or two and try running the operation again');
