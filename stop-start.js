@@ -9,7 +9,7 @@ var ec2 = new AWS.EC2();
 
 var stopStart = 'start';
 var reportOnly = false;
-var environment = 'prod';
+var environment = 'dev';
 
 const ZERO = 0;
 const ONE = 1;
@@ -29,7 +29,7 @@ function checkInput(stopStart) {
 //////////////////////////////// ASG FUNCTIONS ////////////////////////////////
 
 // Launch or terminate the ASG instances by altering the group size
-// Note this will run regardeless of whether there are any instances in the
+// Note this will run regardeless of whether or not there are any instances in the
 // ASGs and what state they are in as it is not manipulating the instances directly
 function describeAsgInstances() {
   console.log('Retrieving ASG instances...');
@@ -37,7 +37,7 @@ function describeAsgInstances() {
     if (err) {
       console.log(err, err.stack);
     } else {
-      console.log(data);
+      // console.log(data);
       if (data.AutoScalingGroups.length > 0) {
         var results = [];
         for (var i = 0; i < data.AutoScalingGroups.length; i++) {
@@ -56,6 +56,7 @@ function describeAsgInstances() {
         }
         // Get the list of all ASG instances
         retrieveAsgInstances(results);
+        console.log('ASG instances: ', asgInstances);
         // Launch or terminate ASG instances if reporting only not specified
         if (!reportOnly) {
           handleAsgInstances(results);
@@ -117,7 +118,6 @@ function increaseGroupSize(group) {
 function retrieveAsgInstances(groups) {
   console.log('Starting ASG instance retrieval...');
   groups.forEach(recordAsgInstances);
-  console.log('ASG instances: ', asgInstances);
   console.log('Completed ASG instance retrieval');
 }
 
@@ -144,15 +144,16 @@ function describeStandaloneInstances() {
       if (data.Reservations.length > 0) {
         // Get the list of all instances
         for (var i = 0; i < data.Reservations.length; i++) {
-          recordAllInstances(data.Reservations[i].Instances);
+          recordStandaloneInstances(data.Reservations[i].Instances);
         }
-        console.log('All instances: ', instances);
-        // Filter out the instances in ASGs
-        var filteredInstances = filterOutAsgs();
-        console.log('Filtered instances: ', filteredInstances);
+        // console.log('All instances: ', instances);
+        // // Filter out the instances in ASGs
+        // var filteredInstances = filterOutAsgs();
+        // console.log('Filtered instances: ', filteredInstances);
+        console.log('Standalone instances: ', instances);
         // Start or stop the standalone instances if reporting only not specified
         if (!reportOnly) {
-          handleStandaloneInstances(filteredInstances);
+          handleStandaloneInstances(instances);
         }
       } else {
         console.log('No standalone instances present in this environment, moving on...');
@@ -209,19 +210,23 @@ function startInstances(instances) {
 
 // Retrieve all instance IDs accorring to their environment type
 // Ignores recently terminated instances as they hang around for a while
-function recordAllInstances(array) {
+function recordStandaloneInstances(array) {
   // console.log('Recording all instances in the reservation...');
   for (var i = 0; i < array.length; i++) {
-    var tagMissing = true;
+    var results = { Environment: null, Asg: false };
     for (var j = 0; j < array[i].Tags.length; j++) {
       if (array[i].Tags[j].Key === 'environment') {
-        tagMissing = false;
-        if (array[i].Tags[j].Value === environment) {
-          filterOutStuff(array[i]);
-        }
+        results.Environment = array[i].Tags[j].Value;
+      }
+      if (array[i].Tags[j].Key === 'aws:autoscaling:groupName') {
+        results.Asg = true;
       }
     }
-    if (tagMissing === true) {
+    if (results.Asg === false && results.Environment === environment) {
+      filterOutStuff(array[i]);
+    }
+    // Report any stray instances without an environment tag
+    if (results.Environment === null) {
       console.log('WARNING: environment tag not found for ' + array[i].InstanceId + ', this instance will not be handled');
     }
   }
