@@ -32,7 +32,7 @@ function describeAsgInstances() {
     if (err) {
       console.log(err, err.stack);
     } else {
-      console.log(data);
+      // console.log(data);
       if (data.AutoScalingGroups.length > 0) {
         // Get the list of all ASG instances
         retrieveAsgInstances(data.AutoScalingGroups);
@@ -63,7 +63,7 @@ function describeStandaloneInstances() {
     if (err) {
       console.log(err, err.stack);
     } else {
-      console.log(data);
+      // console.log(data);
       if (data.Reservations.length > 0) {
         // Get the list of all instances
         for (var i = 0; i < data.Reservations.length; i++) {
@@ -174,7 +174,9 @@ function retrieveAsgInstances(groups) {
 function recordAsgInstances(group) {
   console.log('Recording ASG instances for ' + group.AutoScalingGroupName + ' ...');
   for (var i = 0; i < group.Instances.length; i++) {
-    asgInstances.push(group.Instances[i].InstanceId);
+    if (group.Instances[i] !== 'terminated') {
+      asgInstances.push(group.Instances[i].InstanceId);
+    }
   }
 }
 
