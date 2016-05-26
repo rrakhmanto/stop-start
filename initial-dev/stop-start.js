@@ -56,7 +56,7 @@ function filterAsgs(groups) {
   for (var i = 0; i < groups.length; i++) {
     var tagMissing = true;
     for (var j = 0; j < groups[i].Tags.length; j++) {
-      if (groups[i].Tags[j].Key === 'environment') {
+      if (groups[i].Tags[j].Key.toUpperCase() === 'ENVIRONMENT') {
         tagMissing = false;
         if (groups[i].Tags[j].Value === environment) {
           results.push(groups[i]);
@@ -64,7 +64,7 @@ function filterAsgs(groups) {
       }
     }
     if (tagMissing === true) {
-      console.log('WARNING: environment tag not found for ' + data.AutoScalingGroups[i].AutoScalingGroupName + ', this ASG will not be handled');
+      console.log('WARNING: environment tag not found for ' + groups[i].AutoScalingGroupName + ', this ASG will not be handled');
     }
   }
   return results;
@@ -102,7 +102,7 @@ function decreaseGroupSize(group) {
     AutoScalingGroupName: group.AutoScalingGroupName,
     MaxSize: ZERO,
     MinSize: ZERO
-  }
+  };
   console.log('Stopping ASG instances for ' + group.AutoScalingGroupName + ' ...');
   autoscaling.updateAutoScalingGroup(updateParams, function(err, data) {
     if (err) {
@@ -120,7 +120,7 @@ function increaseGroupSize(group) {
     AutoScalingGroupName: group.AutoScalingGroupName,
     MaxSize: TWO,
     MinSize: TWO
-  }
+  };
   console.log('Starting ASG instances for ' + group.AutoScalingGroupName + ' ...');
   autoscaling.updateAutoScalingGroup(updateParams, function(err, data) {
     if (err) {
@@ -213,7 +213,7 @@ function retrieveStandaloneInstances(instances) {
   for (var i = 0; i < instances.length; i++) {
     var tagResults = { Environment: null, Asg: false };
     for (var j = 0; j < instances[i].Tags.length; j++) {
-      if (instances[i].Tags[j].Key === 'environment') {
+      if (instances[i].Tags[j].Key.toUpperCase() === 'ENVIRONMENT') {
         tagResults.Environment = instances[i].Tags[j].Value;
       }
       if (instances[i].Tags[j].Key === 'aws:autoscaling:groupName') {

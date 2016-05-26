@@ -2,8 +2,6 @@
 console.log('Loading function');
 var AWS = require('aws-sdk');
 AWS.config.region = 'ap-southeast-2';
-var credentials = new AWS.SharedIniFileCredentials({profile: 'm.kempster'});
-AWS.config.credentials = credentials;
 var autoscaling = new AWS.AutoScaling(); 
 var ec2 = new AWS.EC2();
 
@@ -12,13 +10,8 @@ const ONE = 1;
 const TWO = 2;
 
 exports.handler = (event, context, callback) => {
-
-  var stopStart = 'stop';
-  var reportOnly = false;
-  var environment = 'dev';
-
-  function checkInput(stopStart) {
-    if (stopStart !== 'stop' && stopStart !== 'start') {
+  function checkInput() {
+    if (event.stopStart !== 'stop' && event.stopStart !== 'start') {
       console.log('ERROR: please choose either start or stop as the action to perform');
       process.exit(1);
     }
@@ -43,7 +36,7 @@ exports.handler = (event, context, callback) => {
           var asgInstances = retrieveAsgInstances(results);
           console.log('ASG instances: ', asgInstances);
           // Launch or terminate ASG instances if reporting only not specified
-          if (!reportOnly) {
+          if (!event.reportOnly) {
             handleAsgInstances(results);
           }
         } else {
@@ -58,15 +51,15 @@ exports.handler = (event, context, callback) => {
     for (var i = 0; i < groups.length; i++) {
       var tagMissing = true;
       for (var j = 0; j < groups[i].Tags.length; j++) {
-        if (groups[i].Tags[j].Key === 'environment') {
+        if (groups[i].Tags[j].Key.toUpperCase() === 'ENVIRONMENT') {
           tagMissing = false;
-          if (groups[i].Tags[j].Value === environment) {
+          if (groups[i].Tags[j].Value === event.environment) {
             results.push(groups[i]);
           }
         }
       }
       if (tagMissing === true) {
-        console.log('WARNING: environment tag not found for ' + data.AutoScalingGroups[i].AutoScalingGroupName + ', this ASG will not be handled');
+        console.log('WARNING: environment tag not found for ' + groups[i].AutoScalingGroupName + ', this ASG will not be handled');
       }
     }
     return results;
@@ -91,7 +84,7 @@ exports.handler = (event, context, callback) => {
   // Initiate the ASG updatng process
   function handleAsgInstances(groups) {
     console.log('Handling ASG instances...');
-    if (stopStart === 'stop') {
+    if (event.stopStart === 'stop') {
       groups.forEach(decreaseGroupSize);
     } else {
       groups.forEach(increaseGroupSize);
@@ -104,7 +97,7 @@ exports.handler = (event, context, callback) => {
       AutoScalingGroupName: group.AutoScalingGroupName,
       MaxSize: ZERO,
       MinSize: ZERO
-    }
+    };
     console.log('Stopping ASG instances for ' + group.AutoScalingGroupName + ' ...');
     autoscaling.updateAutoScalingGroup(updateParams, function(err, data) {
       if (err) {
@@ -122,7 +115,7 @@ exports.handler = (event, context, callback) => {
       AutoScalingGroupName: group.AutoScalingGroupName,
       MaxSize: TWO,
       MinSize: TWO
-    }
+    };
     console.log('Starting ASG instances for ' + group.AutoScalingGroupName + ' ...');
     autoscaling.updateAutoScalingGroup(updateParams, function(err, data) {
       if (err) {
@@ -153,7 +146,7 @@ exports.handler = (event, context, callback) => {
           }
           console.log('Standalone instances: ', results);
           // Start or stop the standalone instances if reporting only not specified
-          if (!reportOnly) {
+          if (!event.reportOnly) {
             handleStandaloneInstances(results);
           }
         } else {
@@ -166,7 +159,7 @@ exports.handler = (event, context, callback) => {
   // Initiate the standalone updatng process
   function handleStandaloneInstances(instances) {
     console.log('Handling standalone instances...');
-    if (stopStart === 'stop') {
+    if (event.stopStart === 'stop') {
       stopInstances(instances);
     } else {
       startInstances(instances);
@@ -215,14 +208,14 @@ exports.handler = (event, context, callback) => {
     for (var i = 0; i < instances.length; i++) {
       var tagResults = { Environment: null, Asg: false };
       for (var j = 0; j < instances[i].Tags.length; j++) {
-        if (instances[i].Tags[j].Key === 'environment') {
+        if (instances[i].Tags[j].Key.toUpperCase() === 'ENVIRONMENT') {
           tagResults.Environment = instances[i].Tags[j].Value;
         }
         if (instances[i].Tags[j].Key === 'aws:autoscaling:groupName') {
           tagResults.Asg = true;
         }
       }
-      if (tagResults.Asg === false && tagResults.Environment === environment && filterInstance(instances[i])) {
+      if (tagResults.Asg === false && tagResults.Environment === event.environment && filterInstance(instances[i])) {
         instanceResults.push(instances[i].InstanceId);
       }
       // Report any stray instances without an environment tag
@@ -248,17 +241,17 @@ exports.handler = (event, context, callback) => {
   // Also ignores an instance that is already in the state that is trying to be accomplished
   function filterInstance(instance) {
     if (instance.State.Name !== 'terminated') {
-      if (!reportOnly) {
+      if (!event.reportOnly) {
         var transientStates = ['pending', 'shutting-down', 'stopping'];
         if (transientStates.indexOf(instance.State.Name) > -1) {
           console.log('WARNING: instance ' + instance.InstanceId + 'is in a ' + instance.State.Name + ' state, ignoring...');
           console.log('Please wait a minute or two and try running the operation again');
           console.log('Otherwise you may want to see what this instance is doing in the console as it may be having issues');
           return false;
-        } else if (instance.State.Name === 'stopped' && stopStart === 'stop') {
+        } else if (instance.State.Name === 'stopped' && event.stopStart === 'stop') {
           console.log('Instance ' + instance.InstanceId + ' already stopped, ignoring...');
           return false;
-        } else if (instance.State.Name === 'running' && stopStart === 'start') {
+        } else if (instance.State.Name === 'running' && event.stopStart === 'start') {
           console.log('Instance ' + instance.InstanceId + ' already started, ignoring...');
           return false;
         } else {
@@ -274,7 +267,7 @@ exports.handler = (event, context, callback) => {
 
   //////////////////////////////// FUNCTION INVOCATION ////////////////////////////////
 
-  checkInput(stopStart);
+  checkInput();
   describeAsgInstances();
   describeStandaloneInstances();
 };
