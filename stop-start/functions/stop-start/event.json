@@ -1,0 +1,5 @@
+{
+  "stopStart": "stop",
+  "reportOnly": false,
+  "environment": "dev"
+}

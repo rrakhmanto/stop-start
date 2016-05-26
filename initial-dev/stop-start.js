@@ -7,9 +7,9 @@ AWS.config.credentials = credentials;
 var autoscaling = new AWS.AutoScaling(); 
 var ec2 = new AWS.EC2();
 
-var stopStart = 'start';
+var stopStart = 'stop';
 var reportOnly = false;
-var environment = 'prod';
+var environment = 'dev';
 
 const ZERO = 0;
 const ONE = 1;
