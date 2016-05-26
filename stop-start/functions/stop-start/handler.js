@@ -44,6 +44,7 @@ exports.handler = (event, context, callback) => {
     });
   }
 
+  // Filters out ASGs based on what environment type they belong to
   function filterAsgs(groups) {
     var results = [];
     for (var i = 0; i < groups.length; i++) {
@@ -226,7 +227,7 @@ exports.handler = (event, context, callback) => {
 
   //////////////////////////////// OTHER FUNCTIONS ////////////////////////////////
 
-  // I wrote this as annoyingly concat() does not seem to work
+  // I wrote this as annoyingly concat() does not seem to work that way I expected it to
   function myConcat(array1, array2) {
     for (var i = 0; i < array2.length; i++) {
       array1.push(array2[i]);
@@ -235,7 +236,7 @@ exports.handler = (event, context, callback) => {
   }
 
   // Reports on whether or not an instance should be included in the results
-  // Ignores an instance in a transient state as well as those that have been terminated
+  // Ignores terminated instances as well as those that are in a transient state
   // Also ignores an instance that is already in the state that is trying to be accomplished
   function filterInstance(instance) {
     if (instance.State.Name !== 'terminated') {
