@@ -6,8 +6,6 @@ var autoscaling = new AWS.AutoScaling();
 var ec2 = new AWS.EC2();
 
 const ZERO = 0;
-const ONE = 1;
-const TWO = 2;
 
 exports.handler = (event, context, callback) => {
   function checkInput() {
@@ -113,8 +111,8 @@ exports.handler = (event, context, callback) => {
   function increaseGroupSize(group) {
     var updateParams = {
       AutoScalingGroupName: group.AutoScalingGroupName,
-      MaxSize: TWO,
-      MinSize: TWO
+      MaxSize: event.asgSize,
+      MinSize: event.asgSize
     };
     console.log('Starting ASG instances for ' + group.AutoScalingGroupName + ' ...');
     autoscaling.updateAutoScalingGroup(updateParams, function(err, data) {

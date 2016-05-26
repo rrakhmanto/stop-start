@@ -1,5 +1,6 @@
 {
   "stopStart": "stop",
   "reportOnly": false,
-  "environment": "dev"
+  "environment": "dev",
+  "asgSize": 2
 }
