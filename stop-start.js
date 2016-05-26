@@ -9,14 +9,12 @@ var ec2 = new AWS.EC2();
 
 var stopStart = 'start';
 var reportOnly = false;
-var environment = 'dev';
+var environment = 'prod';
 
 const ZERO = 0;
 const ONE = 1;
 const TWO = 2;
 
-// Keeps track of all instances to compare later
-var asgInstances = [];
 var instances = [];
 
 function checkInput(stopStart) {
@@ -41,8 +39,8 @@ function describeAsgInstances() {
       if (data.AutoScalingGroups.length > 0) {
         // Filter ASGs based on environment tag
         var results = filterAsgs(data.AutoScalingGroups);
-        // Get the list of all ASG instances
-        retrieveAsgInstances(results);
+        // Get the list of all ASG instances for reporting
+        var asgInstances = retrieveAsgInstances(results);
         console.log('ASG instances: ', asgInstances);
         // Launch or terminate ASG instances if reporting only not specified
         if (!reportOnly) {
@@ -77,15 +75,17 @@ function filterAsgs(groups) {
 // Iterates over all ASGs to get all instances inside them, used for reporting
 function retrieveAsgInstances(groups) {
   console.log('Commencing ASG instance retrieval...');
+  var results = [];
   groups.forEach( function(group) {
     console.log('Recording ASG instances for ' + group.AutoScalingGroupName + ' ...');
     for (var i = 0; i < group.Instances.length; i++) {
       if (group.Instances[i] !== 'terminated') {
-        asgInstances.push(group.Instances[i].InstanceId);
+        results.push(group.Instances[i].InstanceId);
       }
     }
   });
   console.log('Completed ASG instance retrieval');
+  return results;
 }
 
 // Initiate the ASG updatng process
