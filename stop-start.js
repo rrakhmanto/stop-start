@@ -15,8 +15,6 @@ const ZERO = 0;
 const ONE = 1;
 const TWO = 2;
 
-var instances = [];
-
 function checkInput(stopStart) {
   if (stopStart !== 'stop' && stopStart !== 'start') {
     console.log('ERROR: please choose either start or stop as the action to perform');
@@ -146,19 +144,29 @@ function describeStandaloneInstances() {
       // console.log(data);
       if (data.Reservations.length > 0) {
         // Get the list of all instances
+        var results = [];
         for (var i = 0; i < data.Reservations.length; i++) {
-          retrieveStandaloneInstances(data.Reservations[i].Instances);
+          var interimResults = retrieveStandaloneInstances(data.Reservations[i].Instances);
+          results = myConcat(results, interimResults);
         }
-        console.log('Standalone instances: ', instances);
+        console.log('Standalone instances: ', results);
         // Start or stop the standalone instances if reporting only not specified
         if (!reportOnly) {
-          handleStandaloneInstances(instances);
+          handleStandaloneInstances(results);
         }
       } else {
         console.log('No standalone instances present in this environment, moving on...');
       }
     }
   });
+}
+
+// I wrote this as annoyingly concat() does not seem to work
+function myConcat(array1, array2) {
+  for (var i = 0; i < array2.length; i++) {
+    array1.push(array2[i]);
+  }
+  return array1;
 }
 
 // Initiate the standalone updatng process
@@ -209,47 +217,64 @@ function startInstances(instances) {
 // Ignores recently terminated instances as they hang around for a while
 function retrieveStandaloneInstances(instances) {
   console.log('Recording all instances in the reservation...');
+  var instanceResults = [];
   for (var i = 0; i < instances.length; i++) {
-    var results = { Environment: null, Asg: false };
+    var tagResults = { Environment: null, Asg: false };
     for (var j = 0; j < instances[i].Tags.length; j++) {
       if (instances[i].Tags[j].Key === 'environment') {
-        results.Environment = instances[i].Tags[j].Value;
+        tagResults.Environment = instances[i].Tags[j].Value;
       }
       if (instances[i].Tags[j].Key === 'aws:autoscaling:groupName') {
-        results.Asg = true;
+        tagResults.Asg = true;
       }
     }
-    if (results.Asg === false && results.Environment === environment) {
-      filterInstances(instances[i]);
+    if (tagResults.Asg === false && tagResults.Environment === environment && filterInstance(instances[i])) {
+      instanceResults.push(instances[i].InstanceId);
     }
     // Report any stray instances without an environment tag
-    if (results.Environment === null) {
+    if (tagResults.Environment === null) {
       console.log('WARNING: environment tag not found for ' + instances[i].InstanceId + ', this instance will not be handled');
     }
   }
+  return instanceResults;
 }
 
-// Remove instances that are in a transient state
-// Also ignores instances that are already in the state that is trying to be accomplished
-// Note this will also include and check any instances in ASGs, these will get filtered out later
-function filterInstances(instance) {
-  if (!reportOnly) {
-    var transientStates = ['pending', 'shutting-down', 'stopping'];
-    if (transientStates.indexOf(instance.State.Name) > -1) {
-      console.log('WARNING: instance ' + instance.InstanceId + 'is in a ' + instance.State.Name + ' state, ignoring...');
-      console.log('Please wait a minute or two and try running the operation again');
-      console.log('Otherwise you may want to see what this instance is doing in the console as it may be having issues');
-    } else if (instance.State.Name === 'stopped' && stopStart === 'stop') {
-      console.log('Instance ' + c + ' already stopped, ignoring...');
-    } else if (instance.State.Name === 'running' && stopStart === 'start') {
-      console.log('Instance ' + instance.InstanceId + ' already started, ignoring...');
-    } else if (instance.State.Name !== 'terminated') {
-      instances.push(instance.InstanceId);
+//////////////////////////////// OTHER FUNCTIONS ////////////////////////////////
+
+// I wrote this as annoyingly concat() does not seem to work
+function myConcat(array1, array2) {
+  for (var i = 0; i < array2.length; i++) {
+    array1.push(array2[i]);
+  }
+  return array1;
+}
+
+// Reports on whether or not an instance should be included in the results
+// Ignores an instance in a transient state as well as those that have been terminated
+// Also ignores an instance that is already in the state that is trying to be accomplished
+function filterInstance(instance) {
+  if (instance.State.Name !== 'terminated') {
+    if (!reportOnly) {
+      var transientStates = ['pending', 'shutting-down', 'stopping'];
+      if (transientStates.indexOf(instance.State.Name) > -1) {
+        console.log('WARNING: instance ' + instance.InstanceId + 'is in a ' + instance.State.Name + ' state, ignoring...');
+        console.log('Please wait a minute or two and try running the operation again');
+        console.log('Otherwise you may want to see what this instance is doing in the console as it may be having issues');
+        return false;
+      } else if (instance.State.Name === 'stopped' && stopStart === 'stop') {
+        console.log('Instance ' + instance.InstanceId + ' already stopped, ignoring...');
+        return false;
+      } else if (instance.State.Name === 'running' && stopStart === 'start') {
+        console.log('Instance ' + instance.InstanceId + ' already started, ignoring...');
+        return false;
+      } else {
+        return true;
+      }
+    } else {
+      return true;
     }
   } else {
-    if (instance.State.Name !== 'terminated') {
-      instances.push(instance.InstanceId);
-    }
+    return false;
   }
 }
 
