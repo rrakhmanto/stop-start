@@ -8,8 +8,8 @@ var autoscaling = new AWS.AutoScaling();
 var ec2 = new AWS.EC2();
 
 var stopStart = 'start';
-var reportOnly = true;
-var environment = 'prod';
+var reportOnly = false;
+var environment = 'dev';
 
 const ZERO = 0;
 const ONE = 1;
@@ -39,21 +39,8 @@ function describeAsgInstances() {
     } else {
       // console.log(data);
       if (data.AutoScalingGroups.length > 0) {
-        var results = [];
-        for (var i = 0; i < data.AutoScalingGroups.length; i++) {
-          var tagMissing = true;
-          for (var j = 0; j < data.AutoScalingGroups[i].Tags.length; j++) {
-            if (data.AutoScalingGroups[i].Tags[j].Key === 'environment') {
-              tagMissing = false;
-              if (data.AutoScalingGroups[i].Tags[j].Value === environment) {
-                results.push(data.AutoScalingGroups[i]);
-              }
-            }
-          }
-          if (tagMissing === true) {
-            console.log('WARNING: environment tag not found for ' + data.AutoScalingGroups[i].AutoScalingGroupName + ', this ASG will not be handled');
-          }
-        }
+        // Filter ASGs based on environment tag
+        var results = filterAsgs(data.AutoScalingGroups);
         // Get the list of all ASG instances
         retrieveAsgInstances(results);
         console.log('ASG instances: ', asgInstances);
@@ -66,6 +53,39 @@ function describeAsgInstances() {
       }
     }
   });
+}
+
+function filterAsgs(groups) {
+  var results = [];
+  for (var i = 0; i < groups.length; i++) {
+    var tagMissing = true;
+    for (var j = 0; j < groups[i].Tags.length; j++) {
+      if (groups[i].Tags[j].Key === 'environment') {
+        tagMissing = false;
+        if (groups[i].Tags[j].Value === environment) {
+          results.push(groups[i]);
+        }
+      }
+    }
+    if (tagMissing === true) {
+      console.log('WARNING: environment tag not found for ' + data.AutoScalingGroups[i].AutoScalingGroupName + ', this ASG will not be handled');
+    }
+  }
+  return results;
+}
+
+// Iterates over all ASGs to get all instances inside them, used for reporting
+function retrieveAsgInstances(groups) {
+  console.log('Commencing ASG instance retrieval...');
+  groups.forEach( function(group) {
+    console.log('Recording ASG instances for ' + group.AutoScalingGroupName + ' ...');
+    for (var i = 0; i < group.Instances.length; i++) {
+      if (group.Instances[i] !== 'terminated') {
+        asgInstances.push(group.Instances[i].InstanceId);
+      }
+    }
+  });
+  console.log('Completed ASG instance retrieval');
 }
 
 // Initiate the ASG updatng process
@@ -114,30 +134,6 @@ function increaseGroupSize(group) {
   });
 }
 
-// Iterates over all ASGs to get all instances inside them
-function retrieveAsgInstances(groups) {
-  console.log('Commencing ASG instance retrieval...');
-  groups.forEach( function(group) {
-    console.log('Recording ASG instances for ' + group.AutoScalingGroupName + ' ...');
-    for (var i = 0; i < group.Instances.length; i++) {
-      if (group.Instances[i] !== 'terminated') {
-        asgInstances.push(group.Instances[i].InstanceId);
-      }
-    }
-  });
-  console.log('Completed ASG instance retrieval');
-}
-
-// Retrieve the ASG instance IDs
-function recordAsgInstances(group) {
-  console.log('Recording ASG instances for ' + group.AutoScalingGroupName + ' ...');
-  for (var i = 0; i < group.Instances.length; i++) {
-    if (group.Instances[i] !== 'terminated') {
-      asgInstances.push(group.Instances[i].InstanceId);
-    }
-  }
-}
-
 //////////////////////////////// STANDALONE FUNCTIONS ////////////////////////////////
 
 // Start or stop any standalone instances not covered by the ASGs
@@ -151,7 +147,7 @@ function describeStandaloneInstances() {
       if (data.Reservations.length > 0) {
         // Get the list of all instances
         for (var i = 0; i < data.Reservations.length; i++) {
-          recordStandaloneInstances(data.Reservations[i].Instances);
+          retrieveStandaloneInstances(data.Reservations[i].Instances);
         }
         console.log('Standalone instances: ', instances);
         // Start or stop the standalone instances if reporting only not specified
@@ -211,7 +207,7 @@ function startInstances(instances) {
 
 // Retrieve all instance IDs accorring to their environment type
 // Ignores recently terminated instances as they hang around for a while
-function recordStandaloneInstances(instances) {
+function retrieveStandaloneInstances(instances) {
   console.log('Recording all instances in the reservation...');
   for (var i = 0; i < instances.length; i++) {
     var results = { Environment: null, Asg: false };
@@ -224,7 +220,7 @@ function recordStandaloneInstances(instances) {
       }
     }
     if (results.Asg === false && results.Environment === environment) {
-      filterOutStuff(instances[i]);
+      filterInstances(instances[i]);
     }
     // Report any stray instances without an environment tag
     if (results.Environment === null) {
@@ -236,15 +232,15 @@ function recordStandaloneInstances(instances) {
 // Remove instances that are in a transient state
 // Also ignores instances that are already in the state that is trying to be accomplished
 // Note this will also include and check any instances in ASGs, these will get filtered out later
-function filterOutStuff(instance) {
+function filterInstances(instance) {
   if (!reportOnly) {
     var transientStates = ['pending', 'shutting-down', 'stopping'];
     if (transientStates.indexOf(instance.State.Name) > -1) {
-      console.log('WARNING: instance is in a ' + instance.State.Name + ' state, ignoring...');
+      console.log('WARNING: instance ' + instance.InstanceId + 'is in a ' + instance.State.Name + ' state, ignoring...');
       console.log('Please wait a minute or two and try running the operation again');
       console.log('Otherwise you may want to see what this instance is doing in the console as it may be having issues');
     } else if (instance.State.Name === 'stopped' && stopStart === 'stop') {
-      console.log('Instance ' + instance.InstanceId + ' already stopped, ignoring...');
+      console.log('Instance ' + c + ' already stopped, ignoring...');
     } else if (instance.State.Name === 'running' && stopStart === 'start') {
       console.log('Instance ' + instance.InstanceId + ' already started, ignoring...');
     } else if (instance.State.Name !== 'terminated') {
