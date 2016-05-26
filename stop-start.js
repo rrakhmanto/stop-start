@@ -161,14 +161,6 @@ function describeStandaloneInstances() {
   });
 }
 
-// I wrote this as annoyingly concat() does not seem to work
-function myConcat(array1, array2) {
-  for (var i = 0; i < array2.length; i++) {
-    array1.push(array2[i]);
-  }
-  return array1;
-}
-
 // Initiate the standalone updatng process
 function handleStandaloneInstances(instances) {
   console.log('Handling standalone instances...');
