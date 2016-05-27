@@ -89,7 +89,6 @@ exports.handler = (event, context, callback) => {
       groups.forEach(decreaseGroupSize);
     } else {
       updateAsgGroups(groups, groups.length);
-      // groups.forEach(increaseGroupSize);
     }
   }
 
@@ -309,9 +308,9 @@ exports.handler = (event, context, callback) => {
           console.log(err, err.stack);
         } else {
           // Update the relevant ASG with the previously stored size values
-          groups[counter - 1].MinSize = 2;
-          groups[counter - 1].MaxSize = 2;
-          groups[counter - 1].DesiredCapacity = 2;
+          groups[counter - 1].MinSize = Number(data.Item.MinSize.N);
+          groups[counter - 1].MaxSize = Number(data.Item.MaxSize.N);
+          groups[counter - 1].DesiredCapacity = Number(data.Item.DesiredCapacity.N);
           updateAsgGroups(groups, --counter);
         }
       });
