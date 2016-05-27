@@ -4,6 +4,7 @@ var AWS = require('aws-sdk');
 AWS.config.region = 'ap-southeast-2';
 var autoscaling = new AWS.AutoScaling(); 
 var ec2 = new AWS.EC2();
+var dynamodb = new AWS.DynamoDB();
 
 const ZERO = 0;
 
@@ -84,8 +85,10 @@ exports.handler = (event, context, callback) => {
   function handleAsgInstances(groups) {
     console.log('Handling ASG instances...');
     if (event.stopStart === 'stop') {
+      recordAsgInfo(groups);
       groups.forEach(decreaseGroupSize);
     } else {
+      updateAsgGroups(groups, groups.length);
       groups.forEach(increaseGroupSize);
     }
   }
@@ -94,8 +97,9 @@ exports.handler = (event, context, callback) => {
   function decreaseGroupSize(group) {
     var updateParams = {
       AutoScalingGroupName: group.AutoScalingGroupName,
+      MinSize: ZERO,
       MaxSize: ZERO,
-      MinSize: ZERO
+      DesiredCapacity: ZERO
     };
     console.log('Stopping ASG instances for ' + group.AutoScalingGroupName + ' ...');
     autoscaling.updateAutoScalingGroup(updateParams, function(err, data) {
@@ -112,8 +116,9 @@ exports.handler = (event, context, callback) => {
   function increaseGroupSize(group) {
     var updateParams = {
       AutoScalingGroupName: group.AutoScalingGroupName,
-      MaxSize: event.asgSize,
-      MinSize: event.asgSize
+      MinSize: group.MaxSize,
+      MaxSize: group.MaxSize,
+      DesiredCapacity: group.DesiredCapacity
     };
     console.log('Starting ASG instances for ' + group.AutoScalingGroupName + ' ...');
     autoscaling.updateAutoScalingGroup(updateParams, function(err, data) {
@@ -264,9 +269,97 @@ exports.handler = (event, context, callback) => {
     }
   }
 
+  // Records the relevant ASG information for each group in the environment
+  function recordAsgInfo(groups) {
+    for (var i = 0; i < groups.length; i++) {
+      var params = {
+        TableName: 'stop-start',
+        Item: {
+          AutoScalingGroupARN: { "S": groups[i].AutoScalingGroupARN },
+          Environment: { "S": event.environment },
+          MinSize: { "N": groups[i].MinSize.toString() },
+          MaxSize: { "N": groups[i].MaxSize.toString() },
+          DesiredCapacity: { "N": groups[i].DesiredCapacity.toString() }
+        }
+      };
+      dynamodb.putItem(params, function(err, data) {
+        if (err)  {
+          console.log(err, err.stack);
+        } else {
+          console.log(data);
+        }
+      });
+    }
+  }
+
+  // Recursively runs over each ASG to update the size values from the database
+  function updateAsgGroups(groups, counter) {
+    if (counter === 0) {
+      return groups;
+    } else {
+      var params = {
+        TableName: 'stop-start',
+        Key: {
+          AutoScalingGroupARN: { "S": groups[counter - 1].AutoScalingGroupARN },
+        }
+      };
+      dynamodb.getItem(params, function(err, data) {
+        if (err)  {
+          console.log(err, err.stack);
+        } else {
+          // Update the relevant ASG with the previously stored size values
+          groups[counter - 1].MinSize = Number(data.MinSize);
+          groups[counter - 1].MaxSize = Number(data.MaxSize);
+          groups[counter - 1].DesiredCapacity = Number(data.DesiredCapacity);
+          updateAsgGroups(groups, --counter);
+        }
+      });
+    }
+  }
+
   //////////////////////////////// FUNCTION INVOCATION ////////////////////////////////
 
   checkInput();
   describeAsgInstances();
   describeStandaloneInstances();
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
