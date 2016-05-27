@@ -286,7 +286,7 @@ exports.handler = (event, context, callback) => {
         if (err)  {
           console.log(err, err.stack);
         } else {
-          console.log(data);
+          console.log('Database addition successful for ' + groups[i].AutoScalingGroupName);
         }
       });
     }
@@ -308,9 +308,9 @@ exports.handler = (event, context, callback) => {
           console.log(err, err.stack);
         } else {
           // Update the relevant ASG with the previously stored size values
-          groups[counter - 1].MinSize = Number(data.MinSize);
-          groups[counter - 1].MaxSize = Number(data.MaxSize);
-          groups[counter - 1].DesiredCapacity = Number(data.DesiredCapacity);
+          groups[counter - 1].MinSize = Number(data.Item.MinSize.N);
+          groups[counter - 1].MaxSize = Number(data.Item.MaxSize.N);
+          groups[counter - 1].DesiredCapacity = Number(data.Item.DesiredCapacity.N);
           updateAsgGroups(groups, --counter);
         }
       });
