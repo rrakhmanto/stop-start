@@ -89,7 +89,7 @@ exports.handler = (event, context, callback) => {
       groups.forEach(decreaseGroupSize);
     } else {
       updateAsgGroups(groups, groups.length);
-      groups.forEach(increaseGroupSize);
+      // groups.forEach(increaseGroupSize);
     }
   }
 
@@ -286,16 +286,17 @@ exports.handler = (event, context, callback) => {
         if (err)  {
           console.log(err, err.stack);
         } else {
-          console.log('Database addition successful for ' + groups[i].AutoScalingGroupName);
+          console.log('Database addition successful');
         }
       });
     }
   }
 
   // Recursively runs over each ASG to update the size values from the database
+  // Then calls increaseGroupSize when doen
   function updateAsgGroups(groups, counter) {
     if (counter === 0) {
-      return groups;
+      groups.forEach(increaseGroupSize);
     } else {
       var params = {
         TableName: 'stop-start',
@@ -308,9 +309,9 @@ exports.handler = (event, context, callback) => {
           console.log(err, err.stack);
         } else {
           // Update the relevant ASG with the previously stored size values
-          groups[counter - 1].MinSize = Number(data.Item.MinSize.N);
-          groups[counter - 1].MaxSize = Number(data.Item.MaxSize.N);
-          groups[counter - 1].DesiredCapacity = Number(data.Item.DesiredCapacity.N);
+          groups[counter - 1].MinSize = 2;
+          groups[counter - 1].MaxSize = 2;
+          groups[counter - 1].DesiredCapacity = 2;
           updateAsgGroups(groups, --counter);
         }
       });
@@ -323,7 +324,6 @@ exports.handler = (event, context, callback) => {
   describeAsgInstances();
   describeStandaloneInstances();
 };
-
 
 
 
