@@ -19,6 +19,13 @@
       "config": {
         "schedule": "cron(0 0 18 ? * MON-FRI)"
       }
+    },
+    {
+      "name": "start",
+      "type": "schedule",
+      "config": {
+        "schedule": "cron(0 0 6 ? * MON-FRI)"
+      }
     }
   ],
   "environment": {
