@@ -44,44 +44,6 @@
           }
         ]
       }
-    },
-    "stop-start": {
-      "Type": "AWS::DynamoDB::Table",
-      "Properties": {
-        "AttributeDefinitions": [
-          {
-            "AttributeName": "AutoScalingGroupARN",
-            "AttributeType": "S"
-          },
-          {
-            "AttributeName": "DesiredCapacity",
-            "AttributeType": "N"
-          },
-          {
-            "AttributeName": "Environment",
-            "AttributeType": "S"
-          },
-          {
-            "AttributeName": "MinSize",
-            "AttributeType": "N"
-          },
-          {
-            "AttributeName": "MaxSize",
-            "AttributeType": "N"
-          }
-        ],
-        "KeySchema": [
-          {
-            "AttributeName": "AutoScalingGroupARN",
-            "KeyType": "String"
-          }
-        ],
-        "ProvisionedThroughput": {
-          "ReadCapacityUnits": 1,
-          "WriteCapacityUnits": 1
-        },
-        "TableName": "stop-start"
-      }
     }
   },
   "Outputs": {

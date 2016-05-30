@@ -11,7 +11,7 @@ Set up a sls project
 Configure resources:
   Set them up in the s-resources-cf.json file, really only what access you want the function to have (policies)
 Deploy resources
-  sls resource deploy
+  sls resources deploy
 Deploy function
   sls function deploy
 Configure event

@@ -337,8 +337,7 @@ exports.handler = (event, context, callback) => {
         if (err) {
           console.log(err, err.stack);
         } else {
-          console.log(data.Table.TableStatus);
-          console.log(ready);
+          // console.log(data);
           if (data.Table.TableStatus === 'ACTIVE') {
             isTableReady(true);
           } else {
@@ -380,7 +379,7 @@ exports.handler = (event, context, callback) => {
         if (err) {
           console.log(err, err.stack);
         } else {
-          console.log(data);
+          // console.log(data);
           console.log('Table created');
           isTableReady(false);
         }
