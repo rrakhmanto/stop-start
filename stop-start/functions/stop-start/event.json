@@ -2,4 +2,6 @@
   "stopStart": "stop",
   "reportOnly": false,
   "environment": "dev",
+  "tableName": "stop-start",
+  "region": "ap-southeast-2"
 }

@@ -1,14 +1,15 @@
 'use strict';
 console.log('Loading function');
 var AWS = require('aws-sdk');
-AWS.config.region = 'ap-southeast-2';
-var autoscaling = new AWS.AutoScaling(); 
-var ec2 = new AWS.EC2();
-var dynamodb = new AWS.DynamoDB();
-
-const ZERO = 0;
 
 exports.handler = (event, context, callback) => {
+  AWS.config.region = event.region;
+  var autoscaling = new AWS.AutoScaling(); 
+  var ec2 = new AWS.EC2();
+  var dynamodb = new AWS.DynamoDB();
+
+  const ZERO = 0;
+
   function checkInput() {
     if (event.stopStart !== 'stop' && event.stopStart !== 'start') {
       console.log('ERROR: please choose either start or stop as the action to perform');
@@ -159,6 +160,32 @@ exports.handler = (event, context, callback) => {
     });
   }
 
+  // Retrieve all instance IDs accorring to their environment type
+  // Ignores recently terminated instances as they hang around for a while
+  function retrieveStandaloneInstances(instances) {
+    console.log('Recording all instances in the reservation...');
+    var instanceResults = [];
+    for (var i = 0; i < instances.length; i++) {
+      var tagResults = { Environment: null, Asg: false };
+      for (var j = 0; j < instances[i].Tags.length; j++) {
+        if (instances[i].Tags[j].Key.toUpperCase() === 'ENVIRONMENT') {
+          tagResults.Environment = instances[i].Tags[j].Value;
+        }
+        if (instances[i].Tags[j].Key === 'aws:autoscaling:groupName') {
+          tagResults.Asg = true;
+        }
+      }
+      if (tagResults.Asg === false && tagResults.Environment === event.environment && filterInstance(instances[i])) {
+        instanceResults.push(instances[i].InstanceId);
+      }
+      // Report any stray instances without an environment tag
+      if (tagResults.Environment === null) {
+        console.log('WARNING: environment tag not found for ' + instances[i].InstanceId + ', this instance will not be handled');
+      }
+    }
+    return instanceResults;
+  }
+
   // Initiate the standalone updatng process
   function handleStandaloneInstances(instances) {
     console.log('Handling standalone instances...');
@@ -201,32 +228,6 @@ exports.handler = (event, context, callback) => {
     } else {
       console.log('No standalone instances supplied to start');
     }
-  }
-
-  // Retrieve all instance IDs accorring to their environment type
-  // Ignores recently terminated instances as they hang around for a while
-  function retrieveStandaloneInstances(instances) {
-    console.log('Recording all instances in the reservation...');
-    var instanceResults = [];
-    for (var i = 0; i < instances.length; i++) {
-      var tagResults = { Environment: null, Asg: false };
-      for (var j = 0; j < instances[i].Tags.length; j++) {
-        if (instances[i].Tags[j].Key.toUpperCase() === 'ENVIRONMENT') {
-          tagResults.Environment = instances[i].Tags[j].Value;
-        }
-        if (instances[i].Tags[j].Key === 'aws:autoscaling:groupName') {
-          tagResults.Asg = true;
-        }
-      }
-      if (tagResults.Asg === false && tagResults.Environment === event.environment && filterInstance(instances[i])) {
-        instanceResults.push(instances[i].InstanceId);
-      }
-      // Report any stray instances without an environment tag
-      if (tagResults.Environment === null) {
-        console.log('WARNING: environment tag not found for ' + instances[i].InstanceId + ', this instance will not be handled');
-      }
-    }
-    return instanceResults;
   }
 
   //////////////////////////////// OTHER FUNCTIONS ////////////////////////////////
@@ -272,7 +273,7 @@ exports.handler = (event, context, callback) => {
   function recordAsgInfo(groups) {
     for (var i = 0; i < groups.length; i++) {
       var params = {
-        TableName: 'stop-start',
+        TableName: event.tableName,
         Item: {
           AutoScalingGroupARN: { "S": groups[i].AutoScalingGroupARN },
           Environment: { "S": event.environment },
@@ -298,7 +299,7 @@ exports.handler = (event, context, callback) => {
       groups.forEach(increaseGroupSize);
     } else {
       var params = {
-        TableName: 'stop-start',
+        TableName: event.tableName,
         Key: {
           AutoScalingGroupARN: { "S": groups[counter - 1].AutoScalingGroupARN },
         }
@@ -319,46 +320,66 @@ exports.handler = (event, context, callback) => {
 
   //////////////////////////////// FUNCTION INVOCATION ////////////////////////////////
 
-  checkInput();
-  describeAsgInstances();
-  describeStandaloneInstances();
+  function goRun() {
+    checkInput();
+    describeAsgInstances();
+    describeStandaloneInstances();
+  }
+
+  // New table parameters
+  var tableParams = {
+    AttributeDefinitions: [
+      {
+        AttributeName: "AutoScalingGroupARN",
+        AttributeType: "S"
+      },
+      {
+        AttributeName: "DesiredCapacity",
+        AttributeType: "N"
+      },
+      {
+        AttributeName: "Environment",
+        AttributeType: "S"
+      },
+      {
+        AttributeName: "MinSize",
+        AttributeType: "N"
+      },
+      {
+        AttributeName: "MaxSize",
+        AttributeType: "N"
+      }
+    ],
+    KeySchema: [
+      {
+        AttributeName: "AutoScalingGroupARN",
+        KeyType: "String"
+      }
+    ],
+    ProvisionedThroughput: {
+      ReadCapacityUnits: 1,
+      WriteCapacityUnits: 1
+    },
+    TableName: event.tableName
+  }
+
+  // Make a call to see if the table exists yet and handle things accordingly
+  dynamodb.describeTable({ TableName: event.tableName }, function(err, data) {
+    if (err) {
+      // console.log(err, err.stack);
+      console.log('Table ' + event.tableName + ' not found, creating...');
+      dynamodb.createTable(tableParams, function(err, data) {
+        if (err) {
+          console.log(err, err.stack);
+        } else {
+          // console.log(data);
+          console.log('Table created');
+          goRun();
+        }
+      });
+    } else {
+      console.log('Table ' + event.tableName + ' already exists, using this table...');
+      goRun();
+    }
+  });
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
