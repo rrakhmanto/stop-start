@@ -14,10 +14,10 @@
   "endpoints": [],
   "events": [
     {
-      "name": "mySchedule",
+      "name": "stop",
       "type": "schedule",
       "config": {
-        "schedule": "rate(5 minutes)"
+        "schedule": "cron(0 0 18 ? * MON-FRI)"
       }
     }
   ],
