@@ -2,5 +2,4 @@
   "stopStart": "stop",
   "reportOnly": false,
   "environment": "dev",
-  "asgSize": 2
 }
