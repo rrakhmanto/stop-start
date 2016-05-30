@@ -326,34 +326,41 @@ exports.handler = (event, context, callback) => {
     describeStandaloneInstances();
   }
 
+  // Ensure that the table is ready before trying to access it
+  function isTableReady(ready) {
+    if (ready === true) {
+      console.log('Table is ready');
+      // goRun();
+    } else {
+      console.log('Checking table for readiness...');
+      dynamodb.describeTable({ TableName: event.tableName }, function(err, data) {
+        if (err) {
+          console.log(err, err.stack);
+        } else {
+          console.log(data.Table.TableStatus);
+          console.log(ready);
+          if (data.Table.TableStatus === 'ACTIVE') {
+            isTableReady(true);
+          } else {
+            isTableReady(false);
+          }
+        }
+      });
+    }
+  }
+
   // New table parameters
   var tableParams = {
     AttributeDefinitions: [
       {
         AttributeName: "AutoScalingGroupARN",
         AttributeType: "S"
-      },
-      {
-        AttributeName: "DesiredCapacity",
-        AttributeType: "N"
-      },
-      {
-        AttributeName: "Environment",
-        AttributeType: "S"
-      },
-      {
-        AttributeName: "MinSize",
-        AttributeType: "N"
-      },
-      {
-        AttributeName: "MaxSize",
-        AttributeType: "N"
       }
     ],
     KeySchema: [
       {
         AttributeName: "AutoScalingGroupARN",
-        KeyType: "String"
+        KeyType: "HASH"
       }
     ],
     ProvisionedThroughput: {
@@ -363,6 +370,7 @@ exports.handler = (event, context, callback) => {
     TableName: event.tableName
   }
 
+  // Program entry point
   // Make a call to see if the table exists yet and handle things accordingly
   dynamodb.describeTable({ TableName: event.tableName }, function(err, data) {
     if (err) {
@@ -372,14 +380,15 @@ exports.handler = (event, context, callback) => {
         if (err) {
           console.log(err, err.stack);
         } else {
-          // console.log(data);
+          console.log(data);
           console.log('Table created');
-          goRun();
+          isTableReady(false);
         }
       });
     } else {
+      // console.log(data);
       console.log('Table ' + event.tableName + ' already exists, using this table...');
-      goRun();
+      // goRun();
     }
   });
 };
