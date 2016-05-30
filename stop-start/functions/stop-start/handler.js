@@ -119,7 +119,7 @@ exports.handler = (event, context, callback) => {
   function increaseGroupSize(group) {
     var updateParams = {
       AutoScalingGroupName: group.AutoScalingGroupName,
-      MinSize: group.MaxSize,
+      MinSize: group.MinSize,
       MaxSize: group.MaxSize,
       DesiredCapacity: group.DesiredCapacity
     };
