@@ -40,27 +40,30 @@ exports.handler = (event, context, callback) => {
             handleAsgInstances(results);
           }
         } else {
-          console.log('No ASG instances present in this environment, moving on...');
+          console.log('No ASG instances present in this account, moving on...');
         }
       }
     });
   }
 
   // Filters out ASGs based on what environment type they belong to
+  // Will not consider groups that have zero instances when attempting a stop operation
   function filterAsgs(groups) {
     var results = [];
     for (var i = 0; i < groups.length; i++) {
-      var tagMissing = true;
-      for (var j = 0; j < groups[i].Tags.length; j++) {
-        if (groups[i].Tags[j].Key.toUpperCase() === 'ENVIRONMENT') {
-          tagMissing = false;
-          if (groups[i].Tags[j].Value === event.environment) {
-            results.push(groups[i]);
+      if (event.stopStart === 'start' || (event.stopStart === 'stop' && groups[i].MaxSize > 0)) {
+        var tagMissing = true;
+        for (var j = 0; j < groups[i].Tags.length; j++) {
+          if (groups[i].Tags[j].Key.toUpperCase() === 'ENVIRONMENT') {
+            tagMissing = false;
+            if (groups[i].Tags[j].Value === event.environment) {
+              results.push(groups[i]);
+            }
           }
         }
-      }
-      if (tagMissing === true) {
-        console.log('WARNING: environment tag not found for ' + groups[i].AutoScalingGroupName + ', this ASG will not be handled');
+        if (tagMissing === true) {
+          console.log('WARNING: environment tag not found for ' + groups[i].AutoScalingGroupName + ', this ASG will not be handled');
+        }
       }
     }
     return results;
@@ -154,7 +157,7 @@ exports.handler = (event, context, callback) => {
             handleStandaloneInstances(results);
           }
         } else {
-          console.log('No standalone instances present in this environment, moving on...');
+          console.log('No standalone instances present in this account, moving on...');
         }
       }
     });
@@ -330,7 +333,7 @@ exports.handler = (event, context, callback) => {
   function isTableReady(ready) {
     if (ready === true) {
       console.log('Table is ready');
-      // goRun();
+      goRun();
     } else {
       console.log('Checking table for readiness...');
       dynamodb.describeTable({ TableName: event.tableName }, function(err, data) {
@@ -387,7 +390,7 @@ exports.handler = (event, context, callback) => {
     } else {
       // console.log(data);
       console.log('Table ' + event.tableName + ' already exists, using this table...');
-      // goRun();
+      goRun();
     }
   });
 };
