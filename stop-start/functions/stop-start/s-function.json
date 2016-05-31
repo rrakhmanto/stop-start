@@ -17,9 +17,9 @@
       "name": "evening-stop",
       "type": "schedule",
       "config": {
-        "enabled": false,
+        "enabled": true,
         "description": "Event to invoke the function to stop all instances each week night",
-        "schedule": "cron(0 18 * * ? *)",
+        "schedule": "cron(0 18 ? * MON-FRI *)",
         "input": {
           "stopStart": "stop",
           "reportOnly": false,
@@ -33,9 +33,9 @@
       "name": "morning-start",
       "type": "schedule",
       "config": {
-        "enabled": false,
+        "enabled": true,
         "description": "Event to invoke the function to start all instances each week morning",
-        "schedule": "cron(0 6 * * ? *)",
+        "schedule": "cron(0 6 ? * MON-FRI *)",
         "input": {
           "stopStart": "start",
           "reportOnly": false,
