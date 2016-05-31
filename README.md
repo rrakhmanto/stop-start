@@ -1,5 +1,5 @@
-Stop-Start - scheduling stoping and starting of instances
-=========================================================
+Stop-Start - scheduling stopping and starting of instances
+==========================================================
 
 OVERVIEW
 --------
