@@ -17,6 +17,7 @@
       "name": "stop",
       "type": "schedule",
       "config": {
+        "enabled": true,
         "schedule": "cron(0 0 18 ? * MON-FRI)"
       }
     },
@@ -24,6 +25,7 @@
       "name": "start",
       "type": "schedule",
       "config": {
+        "enabled": true,
         "schedule": "cron(0 0 6 ? * MON-FRI)"
       }
     }
