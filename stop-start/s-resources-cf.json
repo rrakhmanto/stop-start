@@ -46,6 +46,38 @@
       }
     }
   },
+  "Stop": {
+    "Type" : "AWS::Events::Rule",
+    "Properties" : {
+      "Description" : "Rule to call the stop-start function to stop all instances",
+      "Name" : "stop",
+      "RoleArn" : String,
+      "ScheduleExpression" : "cron(0 0 18 ? * MON-FRI)",
+      "State" : "ENABLED",
+      "Targets" : [ {
+        "Arn" : String,
+        "Id" : String,
+        "Input" : { "stopStart": "stop", "reportOnly": false, "environment": "dev", "tableName": "stop-start", "region": "ap-southeast-2" },
+        "InputPath" : String
+      } ]
+    }
+  },
+  "Start": {
+    "Type" : "AWS::Events::Rule",
+    "Properties" : {
+      "Description" : "Rule to call the stop-start function to start all instances",
+      "Name" : "start",
+      "RoleArn" : String,
+      "ScheduleExpression" : "cron(0 0 6 ? * MON-FRI)",
+      "State" : "ENABLED",
+      "Targets" : [ {
+        "Arn" : String,
+        "Id" : String,
+        "Input" : String,
+        "InputPath" : String
+      } ]
+    }
+  },
   "Outputs": {
     "IamRoleArnLambda": {
       "Description": "ARN of the lambda IAM role",
