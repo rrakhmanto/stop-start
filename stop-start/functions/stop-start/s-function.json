@@ -14,7 +14,7 @@
   "endpoints": [],
   "events": [
     {
-      "name": "evening-stop",
+      "name": "stop-prod",
       "type": "schedule",
       "config": {
         "enabled": true,
@@ -30,7 +30,7 @@
       }
     },
     {
-      "name": "morning-start",
+      "name": "start-prod",
       "type": "schedule",
       "config": {
         "enabled": true,
@@ -40,6 +40,38 @@
           "stopStart": "start",
           "reportOnly": false,
           "environment": "prod",
+          "tableName": "stop-start",
+          "region": "ap-southeast-2"
+        }
+      }
+    },
+    {
+      "name": "stop-dev",
+      "type": "schedule",
+      "config": {
+        "enabled": true,
+        "description": "Event to invoke the function to stop all instances each week night",
+        "schedule": "cron(0 18 ? * MON-FRI *)",
+        "input": {
+          "stopStart": "stop",
+          "reportOnly": false,
+          "environment": "dev",
+          "tableName": "stop-start",
+          "region": "ap-southeast-2"
+        }
+      }
+    },
+    {
+      "name": "start-dev",
+      "type": "schedule",
+      "config": {
+        "enabled": true,
+        "description": "Event to invoke the function to start all instances each week morning",
+        "schedule": "cron(0 6 ? * MON-FRI *)",
+        "input": {
+          "stopStart": "start",
+          "reportOnly": false,
+          "environment": "dev",
           "tableName": "stop-start",
           "region": "ap-southeast-2"
         }
