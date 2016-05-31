@@ -19,7 +19,7 @@
       "config": {
         "enabled": false,
         "description": "Event to invoke the function to stop all instances each week night",
-        "schedule": "rate(45 minutes)",
+        "schedule": "cron(0 18 * * ? *)",
         "input": {
           "stopStart": "stop",
           "reportOnly": false,
@@ -35,7 +35,7 @@
       "config": {
         "enabled": false,
         "description": "Event to invoke the function to start all instances each week morning",
-        "schedule": "rate(45 minutes)",
+        "schedule": "cron(0 6 * * ? *)",
         "input": {
           "stopStart": "start",
           "reportOnly": false,
