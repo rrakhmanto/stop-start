@@ -6,6 +6,8 @@ OVERVIEW
 
 This project enables the automated stopping and starting of instances in an AWS account, primarily according to the environment type specified. It will handle all instaces for the specified environment in an AWS account whether they are in an auto scaling group or on their own. For the ASGs their size details are set and cleared according to whether a start or stop command is issued, data is kept about their sizing details in a DynamoDB database.
 
+The AWS SErverless framework is used for deployment, more details can be found here: http://docs.serverless.com/v0.5.0/docs
+
 DEPLOYING
 ---------
 
@@ -17,7 +19,7 @@ First the Serverless environment will need to be installed:
 
 `npm install serverless -g`
 
-Verify a successful install by running `serverless` or `sls` for short, the version should be v0.5.3 or later.
+Verify a successful install by running `serverless` or `sls` for short to display the list of commands, the version should be v0.5.3 or later.
 
 Then clone the repo and change directory into the stop-start folder:
 
@@ -26,13 +28,11 @@ git clone https://github.com/base2Services/start-stop
 cd stop-start
 ```
 
-Set up the Serverless project:
+Set up the Serverless project (see http://docs.serverless.com/docs/project-init for mroe details):
 
 `serverless project init`
 
-Configure resources:
-
-A basic set of resources exists to allow the functon to runagainst the instances in EC2. the s-resources-cf.json file. These can be reconfigured if need be prior to deploying. Any additional resoureces that are to be included can also go into this file.
+Configure resources: a basic set of resources exists to allow the functon to run against the instances in EC2, located in the s-resources-cf.json file. These can be reconfigured if need be prior to deploying. Any additional resoureces that are to be included can also go into this file.
 
 Deploy the configured resources:
 
@@ -42,7 +42,7 @@ Deploy the function:
 
 `sls function deploy`
 
-Configure the desired events - one or more are needed. These are in the functions/stop-start/s-function.json file and are of the following format:
+Configure the desired Cloudwatch events - one or more are needed. These are in placed the functions/stop-start/s-function.json file and are of the following format:
 
 ```
 {
@@ -58,7 +58,7 @@ Configure the desired events - one or more are needed. These are in the function
       "environment": "prod",
       "tableName": "stop-start",
       "region": "ap-southeast-2"
-    }
+    }s
   }
 }
 ```
@@ -77,7 +77,7 @@ Generally these will need to be configured in pairs: one to stop instances and o
     * `tableName`: the DynamoDB table name to use, the function will set up a table if one does not exist
     * `region`: the region that the function is to target, if more than one region is needed then a function per region will need to be dpeloyed
 
-Deploy the events:
+Deploy the events (final step):
 
 `sls event deploy`
 
