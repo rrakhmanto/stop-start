@@ -9,7 +9,7 @@ This project enables the automated stopping and starting of instances in an AWS 
 DEPLOYING
 ---------
 
-Please ensure you have Node and NPM installed, versions???
+Please ensure that Node (v5.10.1+) and NPM (v3.8.6+) are installed.
 
 ### Getting Started - a typical workflow
 
@@ -17,20 +17,22 @@ First the Serverless environment will need to be installed:
 
 `npm install serverless -g`
 
+Verify a successful install by running `serverless` or `sls` for short, the version should be v0.5.3 or later.
+
 Then clone the repo and change directory into the stop-start folder:
 
 ```
-git clone https://github.com/base2Services/start-stop:
+git clone https://github.com/base2Services/start-stop
 cd stop-start
 ```
 
 Set up the Serverless project:
 
-`serverless project init???`
+`serverless project init`
 
 Configure resources:
 
-Set them up in the s-resources-cf.json file, really only what access you want the function to have (policies)
+A basic set of resources exists to allow the functon to runagainst the instances in EC2. the s-resources-cf.json file. These can be reconfigured if need be prior to deploying. Any additional resoureces that are to be included can also go into this file.
 
 Deploy the configured resources:
 
