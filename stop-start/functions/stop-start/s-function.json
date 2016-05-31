@@ -14,19 +14,35 @@
   "endpoints": [],
   "events": [
     {
-      "name": "stop",
+      "name": "evening-stop",
       "type": "schedule",
       "config": {
-        "enabled": true,
-        "schedule": "cron(0 0 18 ? * MON-FRI)"
+        "enabled": false,
+        "description": "Event to invoke the function to stop all instances each week night",
+        "schedule": "rate(45 minutes)",
+        "input": {
+          "stopStart": "stop",
+          "reportOnly": false,
+          "environment": "prod",
+          "tableName": "stop-start",
+          "region": "ap-southeast-2"
+        }
       }
     },
     {
-      "name": "start",
+      "name": "morning-start",
       "type": "schedule",
       "config": {
-        "enabled": true,
-        "schedule": "cron(0 0 6 ? * MON-FRI)"
+        "enabled": false,
+        "description": "Event to invoke the function to start all instances each week morning",
+        "schedule": "rate(45 minutes)",
+        "input": {
+          "stopStart": "start",
+          "reportOnly": false,
+          "environment": "prod",
+          "tableName": "stop-start",
+          "region": "ap-southeast-2"
+        }
       }
     }
   ],
