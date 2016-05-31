@@ -77,7 +77,7 @@ Generally these will need to be configured in pairs: one to stop the instances a
     * `tableName`: the DynamoDB table name to use, the function will set up a table if one does not exist
     * `region`: the region that the function is to target, if more than one region is needed then a function per region will need to be deployed
 
-### IMPORTANT - the first operation type to be perfomred in an environment needs to be a stop operation, this ensures that the database records all sizing information prior to making modifications to the ASGs.
+#### IMPORTANT - the first operation type to be perfomred in an environment needs to be a stop operation, this ensures that the database records all sizing information prior to making modifications to the ASGs. Do not attempt to perform a start operation first.
 
 Deploy the events (final step):
 
