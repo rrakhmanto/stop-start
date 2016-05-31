@@ -63,9 +63,19 @@ Configure the desired events - one or more are needed. These are in the function
 }
 ```
 
-Note the following parameters that will need to be configured:
+Generally these will need to be configured in pairs: one to stop instances and one to start instances. Note the following parameters that will need to be configured:
 
-
+* `name`: choose whatever you want here
+* type: leave this as-is
+* config: details about the event
+  * enabled: whether or not the event is to run
+  * schedule: can use either rate(...) format or a valid cron expression
+  * input: the parameters that get passed to the function
+    * stopStart: rither stop or start depending on which operation is to be performed
+    * reportOnly: generates a list of instances that exist for the environment bu twill not start/stop them
+    * environment: the tag name of the environment that the ASGs/instances belong to, this needs to be set up as tags against these resourcees prior to deployment
+    * tableName: the DynamoDB table name to use, the function will set up a table if one does not exist
+    * region: the region that the function is to target, if more than one region is needed then a function per region will need to be dpeloyed
 
 Deploy the events:
 
