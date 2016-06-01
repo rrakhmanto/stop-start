@@ -1,4 +1,4 @@
-Stop-Start - scheduling stopping and starting of AWS ec2 instances
+Stop-Start - scheduling stopping and starting of AWS EC2 instances
 ==================================================================
 
 OVERVIEW
@@ -34,11 +34,11 @@ Set up the Serverless project (see http://docs.serverless.com/docs/project-init 
 
 #### A note on stages
 
-When initialising the project - Serverless, with your input, will set up what is called a stage for you. Stages can be used for various things, typically they are used to separate production accounts from dev/test/uat acocunts. Each stage maps to a separate AWS account and these need to be configured in the user profile under ~/.aws/. Here they can be used to separate various accounts if so desired as this is the way to manage multiple AWS accounts. When ready run the relevant serverless deploy command (see below), you will be prompted for the stage to use.
+When initialising the project - Serverless, with your input, will set up what is called a stage for you. Stages can be used for various things, typically they are used to separate production accounts from dev/test/uat acocunts. Each stage maps to a separate AWS account and these need to be configured in the user profile under ~/.aws/. Here they can be used to separate various accounts if so desired - this is the way to manage multiple AWS accounts. When ready run the relevant Serverless deploy command (see below), you will then be prompted for the stage to use.
 
-Configure Cloudformation resources: a basic set of resources exists to allow the functon to run against the instances in EC2, located in the s-resources-cf.json file. These can be reconfigured if need be prior to deploying. Any additional resoureces that are to be included can also go into this file.
+Configure Cloudformation resources: a basic set of resources exists to allow the functon to run against the instances in EC2, located in the s-resources-cf.json file. These can be reconfigured if need be prior to deploying but it is not mandatory to do so and can be left as-is. When initialising Serverless will automatically deploy these resources for you. Any additional resoureces that are to be included can also go into this file.
 
-Deploy the configured resources:
+If changes are made deploy the configured resources:
 
 `sls resources deploy`
 
