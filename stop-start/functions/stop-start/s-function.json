@@ -14,64 +14,96 @@
   "endpoints": [],
   "events": [
     {
-      "name": "stop-prod",
+      "name": "stop-test-ifs",
       "type": "schedule",
       "config": {
         "enabled": true,
         "description": "Event to invoke the function to stop all instances each week night",
-        "schedule": "cron(0 18 ? * MON-FRI *)",
+        "schedule": "cron(0 19 ? * MON-FRI *)",
         "input": {
           "stopStart": "stop",
           "reportOnly": false,
-          "environment": "prod",
+          "environment": "test-ifs",
           "tableName": "stop-start",
           "region": "ap-southeast-2"
         }
       }
     },
     {
-      "name": "start-prod",
+      "name": "start-test-ifs",
       "type": "schedule",
       "config": {
         "enabled": true,
         "description": "Event to invoke the function to start all instances each week morning",
-        "schedule": "cron(0 6 ? * MON-FRI *)",
+        "schedule": "cron(0 7 ? * MON-FRI *)",
         "input": {
           "stopStart": "start",
           "reportOnly": false,
-          "environment": "prod",
+          "environment": "test-ifs",
           "tableName": "stop-start",
           "region": "ap-southeast-2"
         }
       }
     },
     {
-      "name": "stop-dev",
+      "name": "stop-dev-ifs-new",
       "type": "schedule",
       "config": {
         "enabled": true,
         "description": "Event to invoke the function to stop all instances each week night",
-        "schedule": "cron(0 18 ? * MON-FRI *)",
+        "schedule": "cron(0 19 ? * MON-FRI *)",
         "input": {
           "stopStart": "stop",
           "reportOnly": false,
-          "environment": "dev",
+          "environment": "dev-ifs-new",
           "tableName": "stop-start",
           "region": "ap-southeast-2"
         }
       }
     },
     {
-      "name": "start-dev",
+      "name": "start-dev-ifs-new",
       "type": "schedule",
       "config": {
         "enabled": true,
         "description": "Event to invoke the function to start all instances each week morning",
-        "schedule": "cron(0 6 ? * MON-FRI *)",
+        "schedule": "cron(0 7 ? * MON-FRI *)",
         "input": {
           "stopStart": "start",
           "reportOnly": false,
-          "environment": "dev",
+          "environment": "dev-ifs-new",
+          "tableName": "stop-start",
+          "region": "ap-southeast-2"
+        }
+      }
+    },
+    {
+      "name": "stop-dev-ifs-demo",
+      "type": "schedule",
+      "config": {
+        "enabled": true,
+        "description": "Event to invoke the function to stop all instances each week night",
+        "schedule": "cron(0 19 ? * MON-FRI *)",
+        "input": {
+          "stopStart": "stop",
+          "reportOnly": false,
+          "environment": "dev-ifs-demo",
+          "tableName": "stop-start",
+          "region": "ap-southeast-2"
+        }
+      }
+    },
+    {
+      "name": "start-dev-ifs-demo",
+      "type": "schedule",
+      "config": {
+        "enabled": true,
+        "description": "Event to invoke the function to start all instances each week morning",
+        "schedule": "cron(0 7 ? * MON-FRI *)",
+        "input": {
+          "stopStart": "start",
+          "reportOnly": false,
+          "environment": "dev-ifs-demo",
           "tableName": "stop-start",
           "region": "ap-southeast-2"
         }
