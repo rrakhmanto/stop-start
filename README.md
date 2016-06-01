@@ -73,7 +73,7 @@ Generally these will need to be configured in pairs: one to stop the instances a
 * `type`: leave this as-is
 * `config`: details about the event
   * `enabled`: whether or not the event is to run
-  * `schedule`: can use either the rate(...) format or a valid cron expression
+  * `schedule`: can use either the rate(...) format or a valid cron expression, note this is UTC time so will need to be adjusted depending on what timezone you are in
   * `input`: the parameters that get passed to the function
     * `stopStart`: either stop or start depending on which operation is to be performed
     * `reportOnly`: generates a list of instances that exist for the environment but will not start/stop them or record their details
