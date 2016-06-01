@@ -1,17 +1,17 @@
-Stop-Start - scheduling stopping and starting of instances
-==========================================================
+Stop-Start - scheduling stopping and starting of AWS ec2 instances
+==================================================================
 
 OVERVIEW
 --------
 
-This project enables the automated stopping and starting of instances in an AWS account, primarily according to the environment type specified. It will handle all instaces for the specified environment in an AWS account whether they are in an auto scaling group or standing on their own. For the ASGs their size details are set and cleared according to whether a start or stop command is issued, data is kept about their sizing details in a DynamoDB database.
+This project enables the automated stopping and starting of instances in an AWS account, primarily according to the environment type specified. Motivtion for its creation was generated from the desire to automate the shut down and start up of non production accounts in order to save costs, typically it would be configured to ensure that ec2 instances in an acocunt were only running during business hours. It will handle all instaces for the specified environment in an AWS account whether they are in an auto scaling group or standing on their own. For the ASGs their size details are set and cleared according to whether a start or stop command is issued, data is kept about their sizing details in a DynamoDB database.
 
 The AWS Serverless framework is used for deployment, more details can be found here: http://docs.serverless.com/v0.5.0/docs
 
 DEPLOYING
 ---------
 
-Please ensure that Node (v5.10.1+) and NPM (v3.8.6+) are installed.
+Please ensure that Node (v5.10.1+) and NPM (v3.8.6+) are installed. Earlier versions may work but have not been tested.
 
 ### Getting Started - a typical workflow
 
@@ -21,16 +21,20 @@ First the Serverless environment will need to be installed:
 
 Verify a successful install by running `serverless` or `sls` for short to display the list of commands, the version should be v0.5.3 or later.
 
-Then clone the repo and change directory into the stop-start folder:
+Then clone the repo somewhere and change directory into the stop-start folder:
 
 ```
 git clone https://github.com/base2Services/start-stop
 cd stop-start
 ```
 
-Set up the Serverless project (see http://docs.serverless.com/docs/project-init for mroe details):
+Set up the Serverless project (see http://docs.serverless.com/docs/project-init for more details):
 
 `serverless project init`
+
+#### A note on stages
+
+When initialising the project - Serverless, with your input, will set up what is called a stage for you. Stages can be used for various things, typically they are used to separate production accounts from dev/test/uat acocunts. Each stage maps to a separate AWS account and these need to be configured in the user profile under ~/.aws/. Here they can be used to separate various accounts if so desired as this is the way to manage multiple AWS accounts. When ready run the relevant serverless deploy command (see below), you will be prompted for the stage to use.
 
 Configure Cloudformation resources: a basic set of resources exists to allow the functon to run against the instances in EC2, located in the s-resources-cf.json file. These can be reconfigured if need be prior to deploying. Any additional resoureces that are to be included can also go into this file.
 
