@@ -33,8 +33,18 @@
           "Statement": [
             {
               "Effect": "Allow",
-              "Action": "*",
+              "Action": "ec2:*",
               "Resource": "*"
+            },
+            {
+              "Effect": "Allow",
+              "Action": "autoscaling:*",
+              "Resource": "*"
+            },
+            {
+              "Effect": "Allow",
+              "Action": "dynamodb:*",
+              "Resource": "arn:aws:dynamodb:*"
             }
           ]
         },
