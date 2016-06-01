@@ -296,7 +296,7 @@ exports.handler = (event, context, callback) => {
   }
 
   // Recursively runs over each ASG to update the size values from the database
-  // Then calls increaseGroupSize when doen
+  // Then calls increaseGroupSize when done
   function updateAsgGroups(groups, counter) {
     if (counter === 0) {
       groups.forEach(increaseGroupSize);
