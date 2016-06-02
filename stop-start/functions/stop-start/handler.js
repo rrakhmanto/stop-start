@@ -1,5 +1,5 @@
 'use strict';
-console.log('Loading function');
+console.log('Loading function...');
 var AWS = require('aws-sdk');
 
 exports.handler = (event, context, callback) => {
@@ -49,6 +49,7 @@ exports.handler = (event, context, callback) => {
   // Filters out ASGs based on what environment type they belong to
   // Will not consider groups that have zero instances when attempting a stop operation
   function filterAsgs(groups) {
+    console.log('Filtering ASGs...')
     var results = [];
     for (var i = 0; i < groups.length; i++) {
       if (event.stopStart === 'start' || (event.stopStart === 'stop' && groups[i].MaxSize > 0)) {
@@ -138,7 +139,7 @@ exports.handler = (event, context, callback) => {
 
   // Start or stop any standalone instances not covered by the ASGs
   function describeStandaloneInstances() {
-    console.log('Handling standalone instances...');
+    console.log('Retrieving standalone instances...');
     ec2.describeInstances({}, function(err, data) {
       if (err) {
         console.log(err, err.stack);
@@ -274,6 +275,7 @@ exports.handler = (event, context, callback) => {
 
   // Records the relevant ASG information for each group in the environment
   function recordAsgInfo(groups) {
+    console.log('Recording ASG size data...');
     for (var i = 0; i < groups.length; i++) {
       var params = {
         TableName: event.tableName,
@@ -298,6 +300,7 @@ exports.handler = (event, context, callback) => {
   // Recursively runs over each ASG to update the size values from the database
   // Then calls increaseGroupSize when done
   function updateAsgGroups(groups, counter) {
+    console.log('Restoring ASG size data...');
     if (counter === 0) {
       groups.forEach(increaseGroupSize);
     } else {
@@ -374,6 +377,7 @@ exports.handler = (event, context, callback) => {
 
   // Program entry point
   // Make a call to see if the table exists yet and handle things accordingly
+  console.log('Checking table...');
   dynamodb.describeTable({ TableName: event.tableName }, function(err, data) {
     if (err) {
       // console.log(err, err.stack);
