@@ -10,6 +10,7 @@ exports.handler = (event, context, callback) => {
 
   const ZERO = 0;
 
+  // Ensures that only a valid command is received
   function checkInput() {
     if (event.stopStart !== 'stop' && event.stopStart !== 'start') {
       console.log('ERROR: please choose either start or stop as the action to perform');
