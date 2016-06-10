@@ -42,7 +42,7 @@ If changes are made deploy the configured resources:
 
 `sls resources deploy`
 
-If needed, deploy the function, note the above command shouel also do this:
+Deploy the function:
 
 `sls function deploy`
 
