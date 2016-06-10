@@ -42,7 +42,7 @@ If changes are made deploy the configured resources:
 
 `sls resources deploy`
 
-Deploy the function:
+If needed, deploy the function, note the above command shouel also do this:
 
 `sls function deploy`
 
@@ -67,7 +67,7 @@ Configure the desired Cloudwatch events - one or more are needed. These are in p
 }
 ```
 
-Generally these will need to be configured in pairs: one to stop the instances and one to start the instances. Add these chunks of JSON accordingly separated by commas. Note the following parameters that will need to be configured:
+Generally these will need to be configured in pairs: one to stop the instances and one to start the instances. Add these blocks of JSON accordingly into the `"events": [ ... ]` array separated by commas. Note the following parameters that will need to be configured:
 
 * `name`: choose whatever you want here
 * `type`: leave this as-is
@@ -89,7 +89,13 @@ Deploy the events (final step):
 
 Note one can also deploy the function and events together by running the interactive Serverless console:
 
-`serverless dash deploy`
+`sls dash deploy`
+
+One can also add additional stages by the command:
+
+`sls stage create`
+
+Note however that whenever a different stage is being worked on the Cloudwatch events will need to be reconfigured to suit, there will be an update that caters for this limitation in the future...
 
 AUTHOR
 ------
