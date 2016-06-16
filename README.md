@@ -34,7 +34,7 @@ Set up the Serverless project (see http://docs.serverless.com/docs/project-init 
 
 #### A note on stages
 
-When initialising the project - Serverless, with your input, will set up what is called a stage for you. Stages can be used for various things, typically they are used to separate production accounts from dev/test/uat acocunts. Each stage maps to a separate AWS account and these need to be configured in the user profile under ~/.aws/. Here they can be used to separate various accounts if so desired - this is the way to manage multiple AWS accounts. When ready run the relevant Serverless deploy command (see below), you will then be prompted for the stage to use.
+When initialising the project - Serverless, with your input, will set up what is called a stage for you. Stages can be used for various things, typically they are used to separate production accounts from dev/test/uat acocunts. Each stage maps to a separate AWS account and these need to be configured in the user's profile under ~/.aws/. Here they can be used to separate various accounts if so desired - this is the way to manage multiple AWS accounts. When ready run the relevant Serverless deploy command (see below), you will then be prompted for the stage to use.
 
 Configure Cloudformation resources: a basic set of resources exists to allow the functon to run against the instances in EC2, located in the s-resources-cf.json file. These can be reconfigured if need be prior to deploying but it is not mandatory to do so and can be left as-is. When initialising Serverless will automatically deploy these resources for you. Any additional resoureces that are to be included can also go into this file.
 
@@ -42,7 +42,7 @@ If changes are made deploy the configured resources:
 
 `sls resources deploy`
 
-Deploy the function:
+Then deploy the function:
 
 `sls function deploy`
 
@@ -83,7 +83,7 @@ Generally these will need to be configured in pairs: one to stop the instances a
 
 #### IMPORTANT - the first operation type to be performed in an environment needs to be a stop operation, this ensures that the database records all sizing information prior to making modifications to the ASGs. Do not attempt to perform a start operation first.
 
-Deploy the events (final step):
+Then deploy the events (final step):
 
 `sls event deploy`
 
@@ -103,3 +103,28 @@ AUTHOR
 Michael Kempster - initial work - Base2Services
 
 m.kempster@base2services.com
+
+LICENSE
+-------
+
+MIT License
+
+Copyright (c) 2016 Michael Peter Kempster
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
