@@ -2,7 +2,7 @@
 console.log('Running...');
 var AWS = require('aws-sdk');
 AWS.config.region = 'us-east-1';
-var lambda = new AWS.Lambda({apiVersion: '2015-03-31'});
+var lambda = new AWS.Lambda({ apiVersion: '2015-03-31' });
 var functionName = 'stop-start-stop-start';
 
 // Get all function details
@@ -34,7 +34,7 @@ function checkFunctionName(functions) {
 
 // Invoke the function with the specified event configuration parameters
 function invokeFunction(name) {
-  var eventConfig = '{ "stopStart": "stop", "reportOnly": false, "environment": "prod", "tableName": "stop-start", "region": "ap-southeast-2" }';
+  var eventConfig = '{ "stopStart": "start", "reportOnly": false, "environment": "dev", "tableName": "stop-start", "region": "ap-southeast-2" }';
   var params = {
     FunctionName: name,
     InvocationType: 'RequestResponse',
