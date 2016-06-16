@@ -62,6 +62,6 @@ function setLambdaVariables() {
   config.environment = process.env.ENVIRONMENT || 'dev';
   config.tableName = process.env.TABLE_NAME || 'stop-start';
   config.region = process.env.REGION || 'ap-southeast-2';
-  condole.log(config);
+  console.log(config);
   return JSON.stringify(config);
 }
