@@ -109,7 +109,7 @@ LICENSE
 
 MIT License
 
-Copyright (c) 2016 Michael Peter Kempster
+Copyright (c) 2016 Base2Services Pty Ltd
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
