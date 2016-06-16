@@ -13,7 +13,8 @@ function listFunctions() {
     if (err) {
       console.log(err, err.stack);
     } else {
-      // console.log(data.Functions);
+      // console.log(data);
+      console.log('Got functions');
       checkFunctionName(data.Functions);
     }
   });
@@ -24,6 +25,7 @@ function checkFunctionName(functions) {
   console.log('Checking for function existence...')
   for (var i = 0; i < functions.length; i++) {
     if (functions[i].FunctionName === functionName) {
+      console.log('Found function ' + functionName);
       invokeFunction(functions[i].FunctionName);
       return;
     }
@@ -34,6 +36,7 @@ function checkFunctionName(functions) {
 
 // Invoke the function with the specified event configuration parameters
 function invokeFunction(name) {
+  console.log('Invoking function ' + functionName + '...');
   var eventConfig = '{ "stopStart": "start", "reportOnly": false, "environment": "dev", "tableName": "stop-start", "region": "ap-southeast-2" }';
   var params = {
     FunctionName: name,
