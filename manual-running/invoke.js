@@ -38,6 +38,7 @@ function checkFunctionName(functions) {
 
 // Invoke the function with the specified event configuration parameters
 function invokeFunction(name) {
+  console.log(name);
   console.log('Invoking function ' + functionName + '...');
   var eventConfig = setLambdaVariables();
   var params = {
@@ -59,7 +60,7 @@ function setLambdaVariables() {
   var config = {};
   config.stopStart = process.env.STOP_START || 'stop';
   config.reportOnly = process.env.REPORT_ONLY || false;
-  config.environment = process.env.ENVIRONMENT || 'dev';
+  config.environment = process.env.ENVIRONMENT || 'prod';
   config.tableName = process.env.TABLE_NAME || 'stop-start';
   config.region = process.env.REGION || 'ap-southeast-2';
   console.log(config);

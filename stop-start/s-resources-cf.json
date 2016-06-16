@@ -45,6 +45,11 @@
               "Effect": "Allow",
               "Action": "dynamodb:*",
               "Resource": "arn:aws:dynamodb:*"
+            },
+            {
+              "Effect": "Allow",
+              "Action": "logs:*",
+              "Resource": "arn:aws:logs:*"
             }
           ]
         },
