@@ -24,7 +24,7 @@ function listFunctions() {
 
 // Search the list of functions for the correct name
 function checkFunctionName(functions) {
-  console.log('Checking for function existence...')
+  console.log('Checking that the specified function exists...')
   for (var i = 0; i < functions.length; i++) {
     if (functions[i].FunctionName === functionName) {
       console.log('Found function ' + functionName);
