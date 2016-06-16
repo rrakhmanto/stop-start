@@ -58,7 +58,7 @@ function setLambdaVariables() {
   console.log('Setting function variables...');
   var config = {};
   config.stopStart = process.env.STOP_START || 'stop';
-  config.reportOnly = process.env.REPORT_ONLY || false;
+  config.reportOnly = JSON.parse(process.env.REPORT_ONLY) || false;
   config.environment = process.env.ENVIRONMENT || 'prod';
   config.tableName = process.env.TABLE_NAME || 'stop-start';
   config.region = process.env.REGION || 'ap-southeast-2';
