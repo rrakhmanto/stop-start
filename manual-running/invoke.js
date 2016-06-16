@@ -1,9 +1,11 @@
 'use strict';
 console.log('Running...');
 var AWS = require('aws-sdk');
-AWS.config.region = 'us-east-1';
+AWS.config.region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
 var lambda = new AWS.Lambda({ apiVersion: '2015-03-31' });
-var functionName = 'stop-start-stop-start';
+var functionName = process.env.FUNCTION_NAME || 'stop-start-stop-start';
+
+listFunctions();
 
 // Get all function details
 // Note: does not yet handle pagination
@@ -37,7 +39,7 @@ function checkFunctionName(functions) {
 // Invoke the function with the specified event configuration parameters
 function invokeFunction(name) {
   console.log('Invoking function ' + functionName + '...');
-  var eventConfig = '{ "stopStart": "start", "reportOnly": false, "environment": "dev", "tableName": "stop-start", "region": "ap-southeast-2" }';
+  var eventConfig = setLambdaVariables();
   var params = {
     FunctionName: name,
     InvocationType: 'RequestResponse',
@@ -52,4 +54,12 @@ function invokeFunction(name) {
   });
 }
 
-listFunctions();
+function setLambdaVariables() {
+  var config = {};
+  config.stopStart = process.env.STOP_START || 'stop';
+  config.reportOnly = process.env.REPORT_ONLY || false;
+  config.environment = process.env.ENVIRONMENT || 'dev';
+  config.tableName = process.env.TABLE_NAME || 'stop-start';
+  config.region = process.env.REGION || 'ap-southeast-2';
+  return JSON.stringify(config);
+}
