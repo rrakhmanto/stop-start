@@ -37,12 +37,11 @@ function checkFunctionName(functions) {
 }
 
 // Invoke the function with the specified event configuration parameters
-function invokeFunction(name) {
-  console.log(name);
+function invokeFunction() {
   console.log('Invoking function ' + functionName + '...');
   var eventConfig = setLambdaVariables();
   var params = {
-    FunctionName: name,
+    FunctionName: functionName,
     InvocationType: 'RequestResponse',
     Payload: eventConfig
   };
