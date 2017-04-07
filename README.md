@@ -19,7 +19,7 @@ First the Serverless environment will need to be installed:
 
 `npm install serverless -g`
 
-Verify a successful install by running `serverless` or `sls` for short to display the list of commands, the version should be v0.5.3 or later.
+Verify a successful install by running `serverless` or `sls` for short to display the list of commands, the version should be v0.5.3.
 
 Then clone the repo somewhere and change directory into the stop-start folder:
 
